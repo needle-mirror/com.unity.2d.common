@@ -40,7 +40,7 @@ namespace UnityEngine.Experimental.U2D.Common
         {
             return (element.pseudoStates & PseudoStates.Checked) == PseudoStates.Checked;
         }
-        
+
         public static void SetChecked(this VisualElement element, bool isChecked)
         {
             if (isChecked)
@@ -52,6 +52,7 @@ namespace UnityEngine.Experimental.U2D.Common
                 element.pseudoStates &= ~PseudoStates.Checked;
             }
         }
+
 #endif
     }
 }

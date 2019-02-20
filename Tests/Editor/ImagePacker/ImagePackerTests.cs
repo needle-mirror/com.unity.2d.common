@@ -28,51 +28,51 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
         {
             yield return new TestCaseData(new[] { new Vector2Int(64, 64) }, 0,
                 new[]
-                {
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 0} ,
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 3} ,
-                },
+            {
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 0} ,
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 3} ,
+            },
                 4, 0
-            );
+                );
 
             yield return new TestCaseData(new[] { new Vector2Int(64, 64) }, 0,
                 new[]
-                {
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 0} ,
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 3} ,
-                },
+            {
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 0} ,
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 3} ,
+            },
                 4, 0
-            );
+                );
 
             yield return new TestCaseData(new[] { new Vector2Int(64, 64), new Vector2Int(128, 64) }, 0,
                 new[]
-                {
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 64, 64), index = 0} ,
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 3} ,
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 4} ,
-                },
+            {
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 64, 64), index = 0} ,
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 3} ,
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 4} ,
+            },
                 5, 1
-            );
+                );
 
             yield return new TestCaseData(new[] { new Vector2Int(64, 64), new Vector2Int(128, 64) }, 0,
                 new[]
-                {
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 0, 0), index = 0} ,
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 3} ,
-                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 4} ,
-                },
+            {
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 0, 0), index = 0} ,
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 3} ,
+                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 4} ,
+            },
                 5, 0
-            );
-            
-            yield return new TestCaseData(new Vector2Int[0] {}, 0,new ImagePacker.ImagePackRect[0],5, 0);
+                );
+
+            yield return new TestCaseData(new Vector2Int[0] {}, 0, new ImagePacker.ImagePackRect[0], 5, 0);
         }
 
         [Test, TestCaseSource("PackSpriteTestCases")]
@@ -159,9 +159,9 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
                 {
                     RectInt other = packedRect[k];
                     var contains = !((other.xMax + padding <= testRect.xMin ||
-                        other.yMax + padding <= testRect.yMin) ||
-                        (other.xMin >= testRect.xMax + padding ||
-                            other.yMin >= testRect.yMax + padding));
+                                      other.yMax + padding <= testRect.yMin) ||
+                                     (other.xMin >= testRect.xMax + padding ||
+                                      other.yMin >= testRect.yMax + padding));
                     Assert.IsFalse(contains);
                 }
 
@@ -224,9 +224,9 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
                 {
                     RectInt other = packedRect[k];
                     var contains = !((other.xMax + padding <= testRect.xMin ||
-                        other.yMax + padding <= testRect.yMin) ||
-                        (other.xMin >= testRect.xMax + padding ||
-                            other.yMin >= testRect.yMax + padding));
+                                      other.yMax + padding <= testRect.yMin) ||
+                                     (other.xMin >= testRect.xMax + padding ||
+                                      other.yMin >= testRect.yMax + padding));
                     Assert.IsFalse(contains);
                 }
 

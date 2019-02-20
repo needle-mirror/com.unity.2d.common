@@ -1,7 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.U2D.Sprites;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -80,19 +80,19 @@ namespace UnityEditor.Experimental.U2D.Common
         {
             m_ReorderableList = new ReorderableList(m_PackRects, typeof(RectInt), false, false, true, true);
             m_ReorderableList.elementHeightCallback = (int index) =>
-            {
-                return EditorGUIUtility.singleLineHeight * 2 + 6;
-            };
+                {
+                    return EditorGUIUtility.singleLineHeight * 2 + 6;
+                };
             m_ReorderableList.drawElementCallback = DrawListElement;
 
             m_ReorderableList.onAddCallback = (list) =>
-            {
-                m_PackRects.Add(new RectInt());
-            };
+                {
+                    m_PackRects.Add(new RectInt());
+                };
             m_ReorderableList.onRemoveCallback = (list) =>
-            {
-                m_PackRects.RemoveAt(list.index);
-            };
+                {
+                    m_PackRects.RemoveAt(list.index);
+                };
         }
 
         void DrawListElement(Rect rect, int index, bool isactive, bool isfocused)
@@ -268,7 +268,7 @@ namespace UnityEditor.Experimental.U2D.Common
             if (
                 ((Event.current.type == EventType.MouseUp || Event.current.type == EventType.MouseDown) && zoomMode) ||
                 ((Event.current.type == EventType.KeyUp || Event.current.type == EventType.KeyDown) && Event.current.keyCode == KeyCode.LeftAlt)
-            )
+                )
             {
                 Repaint();
             }

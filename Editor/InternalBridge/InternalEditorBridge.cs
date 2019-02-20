@@ -1,8 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using UnityEditor.ShortcutManagement;
+using UnityEditor.U2D.Sprites;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -47,8 +46,7 @@ namespace UnityEditor.Experimental.U2D.Common
 
         public static void ShowSpriteEditorWindow()
         {
-            var window = EditorWindow.GetWindow<SpriteEditorWindow>();
-            window.Show();
+            SpriteUtilityWindow.ShowSpriteEditorWindow();
         }
 
         public static void ApplyWireMaterial()
@@ -58,20 +56,19 @@ namespace UnityEditor.Experimental.U2D.Common
 
         public static void ResetSpriteEditorView(ISpriteEditor spriteEditor)
         {
-            SpriteEditorWindow sew = spriteEditor as SpriteEditorWindow;
-            if (sew != null)
+            if (spriteEditor != null)
             {
-                Type t = sew.GetType();
+                Type t = spriteEditor.GetType();
                 var zoom = t.GetField("m_Zoom", BindingFlags.Instance | BindingFlags.NonPublic);
                 if (zoom != null)
                 {
-                    zoom.SetValue(sew, -1);
+                    zoom.SetValue(spriteEditor, -1);
                 }
 
                 var scrollPosition = t.GetField("m_ScrollPosition", BindingFlags.Instance | BindingFlags.NonPublic);
                 if (scrollPosition != null)
                 {
-                    scrollPosition.SetValue(sew, new Vector2());
+                    scrollPosition.SetValue(spriteEditor, new Vector2());
                 }
             }
         }
