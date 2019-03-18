@@ -10,11 +10,6 @@ namespace UnityEditor.Experimental.U2D.Common
 {
     internal static class InternalEditorBridge
     {
-        public static EditorWindow GetCurrentInspectorWindow()
-        {
-            return InspectorWindow.s_CurrentInspectorWindow;
-        }
-
         public static Vector3 GetSnapSettingMove()
         {
             return SnapSettings.move;
