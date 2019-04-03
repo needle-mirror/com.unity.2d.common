@@ -1,8 +1,8 @@
 {
-    "name": "com.unity.2d.common.EditorTests",
+    "name": "Unity.2D.Common.EditorTests",
     "references": [
-        "com.unity.2d.common.Editor",
-        "com.unity.2d.common.Runtime"
+        "Unity.2D.Common.Editor",
+        "Unity.2D.Common.Runtime"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

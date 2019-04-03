@@ -1,7 +1,7 @@
 {
-    "name": "com.unity.2d.common.RuntimeTests",
+    "name": "Unity.2D.Common.RuntimeTests",
     "references": [
-        "com.unity.2d.common.Runtime"
+        "Unity.2D.Common.Runtime"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

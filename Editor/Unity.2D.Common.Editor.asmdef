@@ -1,7 +1,7 @@
 {
-    "name": "com.unity.2d.common.Editor",
+    "name": "Unity.2D.Common.Editor",
     "references": [
-      "com.unity.2d.common.Runtime"
+      "Unity.2D.Common.Runtime"
     ],
     "includePlatforms": [
         "Editor"
