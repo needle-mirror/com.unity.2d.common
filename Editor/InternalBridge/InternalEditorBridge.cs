@@ -96,63 +96,6 @@ namespace UnityEditor.Experimental.U2D.Common
             public object context { get; set; }
         }
 
-        public class WrappedShortcutAttribute : ShortcutAttribute
-        {
-            static readonly WrappedShortcutArguments[] k_ReusableShortcutArgs = { new WrappedShortcutArguments() };
-            static readonly object[] k_EmptyReusableShortcutArgs = {};
-
-            public WrappedShortcutAttribute(string identifier, Type context = null, string defaultKeyCombination = null)
-                : base(identifier, context, defaultKeyCombination)
-            {}
-
-            public override ShortcutEntry CreateShortcutEntry(MethodInfo methodInfo)
-            {
-                var identifier = new Identifier(methodInfo, this);
-
-                IEnumerable<KeyCombination> defaultCombination;
-
-                KeyCombination keyCombination;
-                if (KeyCombination.TryParseMenuItemBindingString(defaultKeyCombination, out keyCombination))
-                    defaultCombination = new[] { keyCombination };
-                else
-                    defaultCombination = Enumerable.Empty<KeyCombination>();
-
-                var type = ShortcutType.Action;
-                //var type = this is ClutchShortcutAttribute ? ShortcutType.Clutch : ShortcutType.Action;
-                var methodParams = methodInfo.GetParameters();
-                Action<ShortcutArguments> action;
-                if (methodParams.Length == 0)
-                {
-                    action = shortcutArgs =>
-                    {
-                        methodInfo.Invoke(null, k_EmptyReusableShortcutArgs);
-                    };
-                }
-                else
-                {
-                    action = shortcutArgs =>
-                    {
-                        k_ReusableShortcutArgs[0].context = shortcutArgs.context;
-                        k_ReusableShortcutArgs[0].state = shortcutArgs.state;
-                        methodInfo.Invoke(null, k_ReusableShortcutArgs);
-                    };
-                }
-
-                return new ShortcutEntry(identifier, defaultCombination, action, context, type);
-            }
-        }
-
-        public class WrappedShortcutArguments
-        {
-            public object context;
-            public ShortcutState state;
-        }
-
-        public static ShortcutContext CreateShortcutContext(Func<bool> isActiveFunc)
-        {
-            return new ShortcutContext() { isActive = isActiveFunc, context = null };
-        }
-
         public static void RegisterShortcutContext(ShortcutContext context)
         {
             ShortcutIntegration.instance.contextManager.RegisterToolContext(context);
