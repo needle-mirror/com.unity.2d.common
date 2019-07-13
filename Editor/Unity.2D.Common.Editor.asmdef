@@ -4,7 +4,6 @@
         "Unity.2D.Common.Runtime",
         "Unity.2D.Sprite.Editor"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],

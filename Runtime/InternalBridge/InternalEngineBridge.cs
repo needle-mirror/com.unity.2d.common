@@ -1,7 +1,7 @@
 using UnityEngine.UIElements;
 using Unity.Collections;
 
-namespace UnityEngine.Experimental.U2D.Common
+namespace UnityEngine.U2D.Common
 {
     internal static class InternalEngineBridge
     {

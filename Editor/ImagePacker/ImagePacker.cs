@@ -5,9 +5,9 @@ using UnityEngine;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace UnityEditor.Experimental.U2D.Common
+namespace UnityEditor.U2D.Common
 {
-    public static class ImagePacker
+    internal static class ImagePacker
     {
         /// <summary>
         /// Given an array of rects, the method returns an array of rects arranged within outPackedWidth and outPackedHeight

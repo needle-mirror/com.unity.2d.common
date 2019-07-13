@@ -5,15 +5,10 @@ using UnityEditor.U2D.Sprites;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace UnityEditor.Experimental.U2D.Common
+namespace UnityEditor.U2D.Common
 {
     internal static class InternalEditorBridge
     {
-        public static Vector3 GetSnapSettingMove()
-        {
-            return SnapSettings.move;
-        }
-
         public static void RenderSortingLayerFields(SerializedProperty order, SerializedProperty layer)
         {
             SortingLayerEditorUtility.RenderSortingLayerFields(order, layer);
@@ -31,7 +26,7 @@ namespace UnityEditor.Experimental.U2D.Common
 
         public static void GenerateOutline(Texture2D texture, Rect rect, float detail, byte alphaTolerance, bool holeDetection, out Vector2[][] paths)
         {
-            SpriteUtility.GenerateOutline(texture, rect, detail, alphaTolerance, holeDetection, out paths);
+            UnityEditor.Sprites.SpriteUtility.GenerateOutline(texture, rect, detail, alphaTolerance, holeDetection, out paths);
         }
 
         public static bool DoesHardwareSupportsFullNPOT()

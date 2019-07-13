@@ -7,11 +7,11 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
-namespace UnityEditor.Experimental.U2D.Common
+namespace UnityEditor.U2D.Common
 {
-    public class ImagePackerDebugEditor : EditorWindow
+    internal class ImagePackerDebugEditor : EditorWindow
     {
-        [MenuItem("Window/2D/Common/Image Packer Debug Editor")]
+        [MenuItem("internal:Window/2D/Common/Image Packer Debug Editor")]
         static void Launch()
         {
             var window = EditorWindow.GetWindow<ImagePackerDebugEditor>();

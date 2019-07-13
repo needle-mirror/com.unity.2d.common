@@ -3,7 +3,7 @@ using Unity.Collections;
 using UnityEditor.Experimental.AssetImporters;
 using UnityEngine;
 
-namespace UnityEditor.Experimental.U2D.Common
+namespace UnityEditor.U2D.Common
 {
     internal interface ITextureSettings
     {
@@ -12,7 +12,7 @@ namespace UnityEditor.Experimental.U2D.Common
 
 
     [Serializable]
-    public class TextureSettings : ITextureSettings
+    internal class TextureSettings : ITextureSettings
     {
         [SerializeField]
         bool m_ColorTexture;
@@ -83,7 +83,7 @@ namespace UnityEditor.Experimental.U2D.Common
     }
 
     [Serializable]
-    public class TextureSpriteSettings : ITextureSettings
+    internal class TextureSpriteSettings : ITextureSettings
     {
         [SerializeField]
         string m_PackingTag;
@@ -150,7 +150,7 @@ namespace UnityEditor.Experimental.U2D.Common
     }
 
     [Serializable]
-    public class TextureWrapSettings : ITextureSettings
+    internal class TextureWrapSettings : ITextureSettings
     {
         [SerializeField]
         TextureWrapMode m_WrapMode;
@@ -189,7 +189,7 @@ namespace UnityEditor.Experimental.U2D.Common
     }
 
     [Serializable]
-    public class TextureAlphaSettings : ITextureSettings
+    internal class TextureAlphaSettings : ITextureSettings
     {
         [SerializeField]
         float m_AlphaTolerance;
@@ -228,7 +228,7 @@ namespace UnityEditor.Experimental.U2D.Common
     }
 
     [Serializable]
-    public class TextureMipmapSettings : ITextureSettings
+    internal class TextureMipmapSettings : ITextureSettings
     {
         [SerializeField]
         TextureImporterMipFilter m_Filter;
@@ -311,7 +311,7 @@ namespace UnityEditor.Experimental.U2D.Common
     }
 
     [Serializable]
-    public class TextureNormalSettings : ITextureSettings
+    internal class TextureNormalSettings : ITextureSettings
     {
         [SerializeField]
         TextureImporterNormalFilter m_Filter;
@@ -361,7 +361,7 @@ namespace UnityEditor.Experimental.U2D.Common
 
     // If this is provided, textureType will be cubemap
     [Serializable]
-    public class TextureCubemapSettings : ITextureSettings
+    internal class TextureCubemapSettings : ITextureSettings
     {
         [SerializeField]
         TextureImporterCubemapConvolution m_Convolution;
@@ -409,7 +409,7 @@ namespace UnityEditor.Experimental.U2D.Common
         }
     }
 
-    public static class TextureGeneratorHelper
+    internal static class TextureGeneratorHelper
     {
         public static TextureGenerationOutput GenerateTextureSprite(NativeArray<Color32> buffer, int bufferWidth, int bufferHeight, TextureSettings settings, TextureImporterPlatformSettings platformSettings,
             TextureSpriteSettings spriteSettings, TextureAlphaSettings alphaSettings = null, TextureMipmapSettings mipmapSettings = null, TextureWrapSettings wrapSettings = null)

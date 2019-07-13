@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UnityEditor.Experimental.U2D.Common
+namespace UnityEditor.U2D.Common
 {
     internal interface IImagePackNodeVisitor
     {
