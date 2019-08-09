@@ -10,7 +10,7 @@ namespace UnityEngine.U2D.Common
             spriteRenderer.SetLocalAABB(aabb);
         }
 
-        public static void SetDeformableBuffer(SpriteRenderer spriteRenderer, NativeArray<Vector3> src)
+        public static void SetDeformableBuffer(SpriteRenderer spriteRenderer, NativeArray<byte> src)
         {
             spriteRenderer.SetDeformableBuffer(src);
         }

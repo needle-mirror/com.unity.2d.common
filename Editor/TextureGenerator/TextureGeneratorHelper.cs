@@ -26,6 +26,8 @@ namespace UnityEditor.U2D.Common
         int m_Aniso;
         [SerializeField]
         bool m_EnablePostProcessor;
+        [SerializeField]
+        SecondarySpriteTexture[] m_SecondaryTextures;
 
         public TextureSettings()
         {
@@ -68,6 +70,8 @@ namespace UnityEditor.U2D.Common
         public bool containsAlpha { get; set; }
         public bool hdr { get; set; }
 
+        public SecondarySpriteTexture[] secondaryTextures { get { return m_SecondaryTextures;} set { m_SecondaryTextures = value; } }
+
         void ITextureSettings.FillTextureGenerationSettings(ref TextureGenerationSettings settings)
         {
             settings.textureImporterSettings.sRGBTexture = colorTexture;
@@ -79,6 +83,7 @@ namespace UnityEditor.U2D.Common
             settings.enablePostProcessor = enablePostProcessor;
             settings.sourceTextureInformation.containsAlpha = containsAlpha;
             settings.sourceTextureInformation.hdr = hdr;
+            settings.secondarySpriteTextures = secondaryTextures;
         }
     }
 
