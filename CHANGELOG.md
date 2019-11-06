@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.0] - 2019-11-06
+### Changed
+- Update version number for Unity 2020.1
+
 ## [2.0.2] - 2019-08-09
 ### Added
 - Add Seconday Texture settings into TextureSettings for TextureGenerator
