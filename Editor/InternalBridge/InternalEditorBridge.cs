@@ -102,5 +102,15 @@ namespace UnityEditor.U2D.Common
         {
             EditorApplication.projectWasLoaded -= callback;
         }
+
+        public static string GetProjectWindowActiveFolderPath()
+        {
+            return ProjectWindowUtil.GetActiveFolderPath();
+        }
+
+        public static GUIContent GetIconContent<T>() where T : UnityEngine.Object 
+        {
+            return EditorGUIUtility.IconContent<T>();
+        }
     }
 }

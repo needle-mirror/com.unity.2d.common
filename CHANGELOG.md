@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.0.1] - 2020-05-19
-### Added
-- Added new internal bridge call for 2D Animation
+## [4.0.0] - 2020-05-11
+### Changed
+- Version bump for Unity 2020.2
 
 ## [3.0.0] - 2019-11-06
 ### Changed
@@ -17,24 +17,24 @@
 ### Changed
 - Mark package to support Unity 2019.3.0a10 onwards.
 
-## [2.0.0] - 2019-6-17
+## [2.0.0] - 2019-06-17
 ### Added
 - Drop preview tag.
 - Remove experimental namespace
 
-## [1.2.0-preview.2] - 2019-6-4
+## [1.2.0-preview.2] - 2019-06-04
 ### Added
 - Remove Image Packer Debug Window
 - Move tests out of package
 
-## [1.2.0-preview.1] - 2019-2-20
+## [1.2.0-preview.1] - 2019-02-20
 ### Added
 - Update for Unity 2019.2 support.
 
-## [1.1.0-preview.2] - 2019-3-18
+## [1.1.0-preview.2] - 2019-03-18
 ### Added
 - Remove deprecated call to Unity internal API
 
-## [1.1.0-preview.1] - 2019-1-25
+## [1.1.0-preview.1] - 2019-01-25
 ### Added
 - Added versioning for CI.
