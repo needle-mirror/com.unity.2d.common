@@ -1,3 +1,4 @@
+using System;
 using UnityEngine.UIElements;
 using Unity.Collections;
 
@@ -28,6 +29,11 @@ namespace UnityEngine.U2D.Common
         public static Rect GetGUIClipTopRect()
         {
             return GUIClip.GetTopRect();
+        }
+
+        public static void SetBatchDeformableBufferAndLocalAABBArray(SpriteRenderer[] spriteRenderers, NativeArray<IntPtr> buffers, NativeArray<int> bufferSizes, NativeArray<Bounds> bounds)
+        {
+            SpriteRendererDataAccessExtensions.SetBatchDeformableBufferAndLocalAABBArray(spriteRenderers, buffers, bufferSizes, bounds);
         }
 
 #if UNITY_EDITOR

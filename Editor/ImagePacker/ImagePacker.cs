@@ -63,7 +63,7 @@ namespace UnityEditor.U2D.Common
                 {
                     outUVTransform[i] = new Vector2Int(outPackedRect[i].x - tightRects[i].x, outPackedRect[i].y - tightRects[i].y);
                 }
-                outPackedBuffer = new NativeArray<Color32>(outPackedBufferWidth * outPackedBufferHeight, Allocator.Temp);
+                outPackedBuffer = new NativeArray<Color32>(outPackedBufferWidth * outPackedBufferHeight, Allocator.Persistent);
 
                 Blit(outPackedBuffer, outPackedRect, outPackedBufferWidth, buffers, tightRects, width, padding);
             }

@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.1] - 2020-05-19
+### Added
+- Added new internal bridge call for 2D Animation
+
 ## [3.0.0] - 2019-11-06
 ### Changed
 - Update version number for Unity 2020.1
