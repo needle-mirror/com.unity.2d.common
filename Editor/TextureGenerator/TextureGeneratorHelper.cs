@@ -1,6 +1,6 @@
 using System;
 using Unity.Collections;
-using UnityEditor.Experimental.AssetImporters;
+using UnityEditor.AssetImporters;
 using UnityEngine;
 
 namespace UnityEditor.U2D.Common

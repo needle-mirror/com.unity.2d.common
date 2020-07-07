@@ -3,7 +3,7 @@ using NUnit.Framework;
 
 namespace UnityEditor.Experimental.U2D.Commons.Tests
 {
-    public class Placeholder
+    internal class Placeholder
     {
         [Test]
         public void PlaceHolderTest()
