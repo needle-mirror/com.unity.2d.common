@@ -39,9 +39,9 @@ namespace UnityEditor.U2D.Common
             return UnityEditor.SpriteUtility.CreateTemporaryDuplicate(tex, width, height);
         }
 
-        public static void ShowSpriteEditorWindow()
+        public static void ShowSpriteEditorWindow(UnityEngine.Object obj = null)
         {
-            SpriteUtilityWindow.ShowSpriteEditorWindow();
+            SpriteUtilityWindow.ShowSpriteEditorWindow(obj);
         }
 
         public static void ApplyWireMaterial()

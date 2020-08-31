@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.2] - 2020-08-31
+### Fixed
+- Allow launching Sprite Editor Window to target a specific asset
+
 ## [4.0.1] - 2020-07-07
 ### Fixed
 - Updated to use non-experimental AssetImporter namespace (case 1254381)
