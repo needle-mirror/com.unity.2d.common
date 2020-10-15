@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.3] - 2020-10-15
+### Fixed
+- Allow 2D Packages to access internal constant value for asset creation instance id
+
 ## [4.0.2] - 2020-08-31
 ### Fixed
 - Allow launching Sprite Editor Window to target a specific asset

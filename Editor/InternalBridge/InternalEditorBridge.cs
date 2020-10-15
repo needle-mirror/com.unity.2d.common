@@ -112,5 +112,10 @@ namespace UnityEditor.U2D.Common
         {
             return EditorGUIUtility.IconContent<T>();
         }
+
+        public static int GetAssetCreationInstanceID_ForNonExistingAssets()
+        {
+            return ProjectBrowser.kAssetCreationInstanceID_ForNonExistingAssets;
+        }
     }
 }
