@@ -153,8 +153,9 @@ namespace UnityEditor.U2D.Common
 
         public void ShowPlatformSpecificSettings()
         {
-            BaseTextureImportPlatformSettings.ShowPlatformSpecificSettings(m_PlatformSettings.ConvertAll<BaseTextureImportPlatformSettings>(x => x as BaseTextureImportPlatformSettings));
-            SyncPlatformSettings();
+            BuildPlatform[] validPlatforms = BuildPlatforms.instance.GetValidPlatforms().ToArray();
+            int shownTextureFormatPage = EditorGUILayout.BeginPlatformGrouping(validPlatforms, EditorGUIUtility.TrTextContent("Default"));
+            BaseTextureImportPlatformSettings.ShowPlatformSpecificSettings(m_PlatformSettings.ConvertAll<BaseTextureImportPlatformSettings>(x => x as BaseTextureImportPlatformSettings), shownTextureFormatPage);
         }
 
         public bool HasModified()

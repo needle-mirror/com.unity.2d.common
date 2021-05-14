@@ -28,6 +28,11 @@ namespace UnityEditor.U2D.Common
         {
             UnityEditor.Sprites.SpriteUtility.GenerateOutline(texture, rect, detail, alphaTolerance, holeDetection, out paths);
         }
+        
+        public static void GenerateOutlineFromSprite(Sprite sprite, float detail, byte alphaTolerance, bool holeDetection, out Vector2[][] paths)
+        {
+            UnityEditor.Sprites.SpriteUtility.GenerateOutlineFromSprite(sprite, detail, alphaTolerance, holeDetection, out paths);
+        }
 
         public static bool DoesHardwareSupportsFullNPOT()
         {

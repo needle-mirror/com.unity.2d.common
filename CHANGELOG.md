@@ -1,5 +1,13 @@
 # Changelog
 
+## [6.0.0-pre.2] - 2021-05-14
+### Fixed
+- Fixed metafiles conflicts
+
+## [6.0.0-pre.1] - 2021-05-05
+### Changed
+- Version bump for Unity 2021.2
+
 ## [5.0.0] - 2021-03-17
 ### Changed
 - Update version for release
