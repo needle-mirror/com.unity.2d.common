@@ -1,5 +1,9 @@
 # Changelog
 
+## [6.0.0-pre.3] - 2021-05-19
+### Fixed
+- Fixed issues in tesselation library.
+
 ## [6.0.0-pre.2] - 2021-05-14
 ### Fixed
 - Fixed metafiles conflicts

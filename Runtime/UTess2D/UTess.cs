@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Collections.LowLevel.Unsafe;
@@ -108,12 +109,12 @@ namespace UnityEngine.U2D.Common.UTess
 
             fixed (double* xvasortPtr = xvasort)
             {
-                UTess.InsertionSort<double, XCompare>(xvasortPtr, 0, 3, new XCompare());
+                ModuleHandle.InsertionSort<double, XCompare>(xvasortPtr, 0, 3, new XCompare());
             }
 
             fixed (double* xvbsortPtr = xvbsort)
             {
-                UTess.InsertionSort<double, XCompare>(xvbsortPtr, 0, 3, new XCompare());
+                ModuleHandle.InsertionSort<double, XCompare>(xvbsortPtr, 0, 3, new XCompare());
             }
 
             for (int i = 0; i < 4; ++i)
@@ -141,7 +142,7 @@ namespace UnityEngine.U2D.Common.UTess
 
             if (a.type != (int)UEventType.EVENT_POINT)
             {
-                float o = UTess.OrientFast(a.a, a.b, b.b);
+                float o = ModuleHandle.OrientFast(a.a, a.b, b.b);
                 if (0 != o)
                 {
                     return (o > 0) ? 1 : -1;
@@ -215,11 +216,11 @@ namespace UnityEngine.U2D.Common.UTess
         internal NativeArray<int> roots;
         internal NativeArray<int> ranks;
 
-        internal static TessLink CreateLink(int count)
+        internal static TessLink CreateLink(int count, Allocator allocator)
         {
             TessLink link = new TessLink();
-            link.roots = new NativeArray<int>(count, Allocator.Temp);
-            link.ranks = new NativeArray<int>(count, Allocator.Temp);
+            link.roots = new NativeArray<int>(count, allocator);
+            link.ranks = new NativeArray<int>(count, allocator);
 
             for (int i = 0; i < count; ++i)
             {
@@ -277,7 +278,7 @@ namespace UnityEngine.U2D.Common.UTess
         }
     };
 
-    internal struct UTess
+    internal struct ModuleHandle
     {
     
         // Max Edge Count with Subdivision allowed. This is already a very relaxed limit
@@ -287,8 +288,40 @@ namespace UnityEngine.U2D.Common.UTess
         internal static readonly  int kMaxIndexCount = 65536;
         internal static readonly  int kMaxVertexCount = 65536;
         internal static readonly  int kMaxTriangleCount = kMaxIndexCount / 3;
-        internal static readonly  int kMaxSmoothenIterations = 124;
+        internal static readonly  int kMaxRefineIterations = 48;
+        internal static readonly  int kMaxSmoothenIterations = 256;
+        internal static readonly  float kIncrementAreaFactor = 1.2f;
     
+        internal static void Copy<T>(NativeArray<T> src, int srcIndex, NativeArray<T> dst, int dstIndex, int length)
+            where T : struct
+        {
+            NativeArray<T>.Copy(src, srcIndex, dst, dstIndex, length);
+        }
+
+        internal static void Copy<T>(NativeArray<T> src, NativeArray<T> dst, int length)
+            where T : struct
+        {
+            Copy(src, 0, dst, 0, length);
+        }
+
+        internal static unsafe void InsertionSort<T, U>(void* array, int lo, int hi, U comp)
+            where T : struct where U : IComparer<T>
+        {
+            int i, j;
+            T t;
+            for (i = lo; i < hi; i++)
+            {
+                j = i;
+                t = UnsafeUtility.ReadArrayElement<T>(array, i + 1);
+                while (j >= lo && comp.Compare(t, UnsafeUtility.ReadArrayElement<T>(array, j)) < 0)
+                {
+                    UnsafeUtility.WriteArrayElement<T>(array, j + 1, UnsafeUtility.ReadArrayElement<T>(array, j));
+                    j--;
+                }
+                UnsafeUtility.WriteArrayElement<T>(array, j + 1, t);
+            }
+        }        
+        
         // Search Lower Bounds 
         internal static int GetLower<T, U, X>(NativeArray<T> values, int count, U check, X condition)
             where T : struct where U : struct where X : ICondition2<T, U>
@@ -362,52 +395,6 @@ namespace UnityEngine.U2D.Common.UTess
                 }
             }
             return -1;
-        }
-
-        internal static void BuildTrianglesAndEdges(NativeArray<float2> vertices, int vertexCount, NativeArray<int> indices, int indexCount, ref NativeArray<UTriangle> triangles, ref int triangleCount, ref NativeArray<int4> delaEdges, ref int delaEdgeCount, ref float maxArea)
-        {
-            // Check if there are invalid triangles or segments.
-            for (int i = 0; i < indexCount; i += 3)
-            {
-                UTriangle tri = new UTriangle();
-                var i0 = indices[i + 0];
-                var i1 = indices[i + 1];
-                var i2 = indices[i + 2];
-                tri.va = vertices[i0];
-                tri.vb = vertices[i1];
-                tri.vc = vertices[i2];
-                tri.c = UTess.CircumCircle(tri);
-                tri.area = UTess.TriangleArea(tri.va, tri.vb, tri.vc);
-                maxArea = math.max(tri.area, maxArea);
-                tri.indices = new int3(i0, i1, i2);
-
-                // Outputs.
-                delaEdges[delaEdgeCount++] = new int4(math.min(i0, i1), math.max(i0, i1), triangleCount, -1);
-                delaEdges[delaEdgeCount++] = new int4(math.min(i1, i2), math.max(i1, i2), triangleCount, -1);
-                delaEdges[delaEdgeCount++] = new int4(math.min(i2, i0), math.max(i2, i0), triangleCount, -1);
-                triangles[triangleCount++] = tri;
-            }
-        }
-
-        internal static void BuildTriangles(NativeArray<float2> vertices, int vertexCount, NativeArray<int> indices, int indexCount, ref NativeArray<UTriangle> triangles, ref int triangleCount, ref float maxArea)
-        {
-            // Check if there are invalid triangles or segments.
-            for (int i = 0; i < indexCount; i += 3)
-            {
-
-                UTriangle tri = new UTriangle();
-                var i0 = indices[i + 0];
-                var i1 = indices[i + 1];
-                var i2 = indices[i + 2];
-                tri.va = vertices[i0];
-                tri.vb = vertices[i1];
-                tri.vc = vertices[i2];
-                tri.c = UTess.CircumCircle(tri);
-                tri.area = UTess.TriangleArea(tri.va, tri.vb, tri.vc);
-                maxArea = math.max(tri.area, maxArea);
-                triangles[triangleCount++] = tri;
-
-            }
         }
 
         // From https://www.cs.cmu.edu/afs/cs/project/quake/public/code/predicates.c and is public domain. Can't find one within Unity.
@@ -528,6 +515,37 @@ namespace UnityEngine.U2D.Common.UTess
             return math.abs(v.z) * 0.5f;
         }
 
+        internal static float Sign(float2 p1, float2 p2, float2 p3)
+        {
+            return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
+        }
+
+        internal static bool IsInsideTriangle(float2 pt, float2 v1, float2 v2, float2 v3)
+        {
+            float d1, d2, d3;
+            bool has_neg, has_pos;
+
+            d1 = Sign(pt, v1, v2);
+            d2 = Sign(pt, v2, v3);
+            d3 = Sign(pt, v3, v1);
+
+            has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+            has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+
+            return !(has_neg && has_pos);
+        }
+        
+        internal static bool IsInsideTriangleApproximate(float2 pt, float2 v1, float2 v2, float2 v3)
+        {
+            float d0, d1, d2, d3;
+            d0 = TriangleArea(v1, v2, v3);
+            d1 = TriangleArea(pt, v1, v2);
+            d2 = TriangleArea(pt, v2, v3);
+            d3 = TriangleArea(pt, v3, v1);
+            float epsilon = 1.1102230246251565e-16f;
+            return Mathf.Abs(d0 - (d1 + d2 + d3)) < epsilon;
+        }        
+        
         internal static bool IsInsideCircle(float2 a, float2 b, float2 c, float2 p)
         {
             float ab = math.dot(a, a);
@@ -554,50 +572,108 @@ namespace UnityEngine.U2D.Common.UTess
             return circum_radius - dist > 0.00001f;
         }
 
-        internal static void Copy<T>(NativeArray<T> src, int srcIndex, NativeArray<T> dst, int dstIndex, int length)
-            where T : struct
+        internal static void BuildTriangles(NativeArray<float2> vertices, int vertexCount, NativeArray<int> indices, int indexCount, ref NativeArray<UTriangle> triangles, ref int triangleCount, ref float maxArea, ref float avgArea, ref float minArea)
         {
-            NativeArray<T>.Copy(src, srcIndex, dst, dstIndex, length);
-        }
-
-        internal static void Copy<T>(NativeArray<T> src, NativeArray<T> dst, int length)
-            where T : struct
-        {
-            Copy(src, 0, dst, 0, length);
-        }
-
-        internal unsafe static void InsertionSort<T, U>(void* array, int lo, int hi, U comp)
-            where T : struct where U : IComparer<T>
-        {
-            int i, j;
-            T t;
-            for (i = lo; i < hi; i++)
+            // Check if there are invalid triangles or segments.
+            for (int i = 0; i < indexCount; i += 3)
             {
-                j = i;
-                t = UnsafeUtility.ReadArrayElement<T>(array, i + 1);
-                while (j >= lo && comp.Compare(t, UnsafeUtility.ReadArrayElement<T>(array, j)) < 0)
-                {
-                    UnsafeUtility.WriteArrayElement<T>(array, j + 1, UnsafeUtility.ReadArrayElement<T>(array, j));
-                    j--;
-                }
-                UnsafeUtility.WriteArrayElement<T>(array, j + 1, t);
+                UTriangle tri = new UTriangle();
+                var i0 = indices[i + 0];
+                var i1 = indices[i + 1];
+                var i2 = indices[i + 2];
+                tri.va = vertices[i0];
+                tri.vb = vertices[i1];
+                tri.vc = vertices[i2];
+                tri.c = CircumCircle(tri);
+                tri.area = TriangleArea(tri.va, tri.vb, tri.vc);
+                maxArea = math.max(tri.area, maxArea);
+                minArea = math.min(tri.area, minArea);
+                avgArea = avgArea + tri.area;
+                triangles[triangleCount++] = tri;
             }
+            avgArea = avgArea / triangleCount;
         }
+        
+        internal static void BuildTriangles(NativeArray<float2> vertices, int vertexCount, NativeArray<int> indices, int indexCount, ref NativeArray<UTriangle> triangles, ref int triangleCount, ref float maxArea, ref float avgArea, ref float minArea, ref float maxEdge, ref float avgEdge, ref float minEdge)
+        {
+            // Check if there are invalid triangles or segments.
+            for (int i = 0; i < indexCount; i += 3)
+            {
+                UTriangle tri = new UTriangle();
+                var i0 = indices[i + 0];
+                var i1 = indices[i + 1];
+                var i2 = indices[i + 2];
+                tri.va = vertices[i0];
+                tri.vb = vertices[i1];
+                tri.vc = vertices[i2];
+                tri.c = CircumCircle(tri);
+                
+                tri.area = TriangleArea(tri.va, tri.vb, tri.vc);
+                maxArea = math.max(tri.area, maxArea);
+                minArea = math.min(tri.area, minArea);
+                avgArea = avgArea + tri.area;
 
+                var e1 = math.distance(tri.va, tri.vb);
+                var e2 = math.distance(tri.vb, tri.vc);
+                var e3 = math.distance(tri.vc, tri.va);
+                maxEdge = math.max(e1, maxEdge);
+                maxEdge = math.max(e2, maxEdge);
+                maxEdge = math.max(e3, maxEdge);
+                minEdge = math.min(e1, minEdge);
+                minEdge = math.min(e2, minEdge);
+                minEdge = math.min(e3, minEdge);
+
+                avgEdge = avgEdge + e1;
+                avgEdge = avgEdge + e2;
+                avgEdge = avgEdge + e3;
+                triangles[triangleCount++] = tri;
+            }
+            avgArea = avgArea / triangleCount;
+            avgEdge = avgEdge / indexCount;
+        }        
+        
+        internal static void BuildTrianglesAndEdges(NativeArray<float2> vertices, int vertexCount, NativeArray<int> indices, int indexCount, ref NativeArray<UTriangle> triangles, ref int triangleCount, ref NativeArray<int4> delaEdges, ref int delaEdgeCount, ref float maxArea, ref float avgArea, ref float minArea)
+        {
+            // Check if there are invalid triangles or segments.
+            for (int i = 0; i < indexCount; i += 3)
+            {
+                UTriangle tri = new UTriangle();
+                var i0 = indices[i + 0];
+                var i1 = indices[i + 1];
+                var i2 = indices[i + 2];
+                tri.va = vertices[i0];
+                tri.vb = vertices[i1];
+                tri.vc = vertices[i2];
+                tri.c = CircumCircle(tri);
+                tri.area = TriangleArea(tri.va, tri.vb, tri.vc);
+                maxArea = math.max(tri.area, maxArea);
+                minArea = math.min(tri.area, minArea);
+                avgArea = avgArea + tri.area;
+                tri.indices = new int3(i0, i1, i2);
+
+                // Outputs.
+                delaEdges[delaEdgeCount++] = new int4(math.min(i0, i1), math.max(i0, i1), triangleCount, -1);
+                delaEdges[delaEdgeCount++] = new int4(math.min(i1, i2), math.max(i1, i2), triangleCount, -1);
+                delaEdges[delaEdgeCount++] = new int4(math.min(i2, i0), math.max(i2, i0), triangleCount, -1);
+                triangles[triangleCount++] = tri;
+            }
+            avgArea = avgArea / triangleCount;
+        }        
+        
         static void CopyGraph(NativeArray<float2> srcPoints, int srcPointCount, ref NativeArray<float2> dstPoints, ref int dstPointCount, NativeArray<int2> srcEdges, int srcEdgeCount, ref NativeArray<int2> dstEdges, ref int dstEdgeCount)
         {
             dstEdgeCount = srcEdgeCount;
             dstPointCount = srcPointCount;
-            UTess.Copy(srcEdges, dstEdges, srcEdgeCount);
-            UTess.Copy(srcPoints, dstPoints, srcPointCount);
+            Copy(srcEdges, dstEdges, srcEdgeCount);
+            Copy(srcPoints, dstPoints, srcPointCount);
         }
 
         static void CopyGeometry(NativeArray<int> srcIndices, int srcIndexCount, ref NativeArray<int> dstIndices, ref int dstIndexCount, NativeArray<float2> srcVertices, int srcVertexCount, ref NativeArray<float2> dstVertices, ref int dstVertexCount)
         {
             dstIndexCount = srcIndexCount;
             dstVertexCount = srcVertexCount;
-            UTess.Copy(srcIndices, dstIndices, srcIndexCount);
-            UTess.Copy(srcVertices, dstVertices, srcVertexCount);
+            Copy(srcIndices, dstIndices, srcIndexCount);
+            Copy(srcVertices, dstVertices, srcVertexCount);
         }
 
         static void TransferOutput(NativeArray<int2> srcEdges, int srcEdgeCount, ref NativeArray<int2> dstEdges, ref int dstEdgeCount, NativeArray<int> srcIndices, int srcIndexCount, ref NativeArray<int> dstIndices, ref int dstIndexCount, NativeArray<float2> srcVertices, int srcVertexCount, ref NativeArray<float2> dstVertices, ref int dstVertexCount)
@@ -605,9 +681,9 @@ namespace UnityEngine.U2D.Common.UTess
             dstEdgeCount = srcEdgeCount;
             dstIndexCount = srcIndexCount;
             dstVertexCount = srcVertexCount;
-            UTess.Copy(srcEdges, dstEdges, srcEdgeCount);
-            UTess.Copy(srcIndices, dstIndices, srcIndexCount);
-            UTess.Copy(srcVertices, dstVertices, srcVertexCount);
+            Copy(srcEdges, dstEdges, srcEdgeCount);
+            Copy(srcIndices, dstIndices, srcIndexCount);
+            Copy(srcVertices, dstVertices, srcVertexCount);
         }
 
         static void GraphConditioner(NativeArray<float2> points, ref NativeArray<float2> pgPoints, ref int pgPointCount, ref NativeArray<int2> pgEdges, ref int pgEdgeCount)
@@ -629,6 +705,41 @@ namespace UnityEngine.U2D.Common.UTess
             pgPoints[0] = new float2(min.x, min.y); pgPoints[1] = new float2(min.x - kNonRect, min.y + mid.y); pgPoints[2] = new float2(min.x, max.y); pgPoints[3] = new float2(min.x + mid.x, max.y + kNonRect);
             pgPoints[4] = new float2(max.x, max.y); pgPoints[5] = new float2(max.x + kNonRect, min.y + mid.y); pgPoints[6] = new float2(max.x, min.y); pgPoints[7] = new float2(min.x + mid.x, min.y - kNonRect);
         }
+        
+        // Reorder vertices.
+        static void Reorder(int startVertexCount, int index, ref NativeArray<int> indices, ref int indexCount, ref NativeArray<float2> vertices, ref int vertexCount)
+        {
+            
+            var found = false;
+            
+            for (var i = 0; i < indexCount; ++i)
+            {
+                if (indices[i] != index) continue;
+                found = true;
+                break;
+            }
+
+            if (!found)
+            {
+                vertexCount--;
+                vertices[index] = vertices[vertexCount];
+                for (var i = 0; i < indexCount; ++i)
+                    if (indices[i] == vertexCount)
+                        indices[i] = index;
+            }
+            
+        }
+        
+        // Perform Sanitization.
+        internal static void VertexCleanupConditioner(int startVertexCount, ref NativeArray<int> indices, ref int indexCount, ref NativeArray<float2> vertices, ref int vertexCount)
+        {
+
+            for (int i = startVertexCount; i < vertexCount; ++i)
+            {
+                Reorder(startVertexCount,i, ref indices, ref indexCount, ref vertices, ref vertexCount);
+            }
+            
+        }        
         
         public static float4 Tessellate(Allocator allocator, NativeArray<float2> points, NativeArray<int2> edges, ref NativeArray<float2> outVertices, ref int outVertexCount, ref NativeArray<int> outIndices, ref int outIndexCount, ref NativeArray<int2> outEdges, ref int outEdgeCount)
         {
@@ -673,7 +784,7 @@ namespace UnityEngine.U2D.Common.UTess
             return ret;
         }
         
-        public static float4 Subdivide(Allocator allocator, NativeArray<float2> points, NativeArray<int2> edges, ref NativeArray<float2> outVertices, ref int outVertexCount, ref NativeArray<int> outIndices, ref int outIndexCount, ref NativeArray<int2> outEdges, ref int outEdgeCount, float areaFactor, float targetArea, int smoothenCount)
+        public static float4 Subdivide(Allocator allocator, NativeArray<float2> points, NativeArray<int2> edges, ref NativeArray<float2> outVertices, ref int outVertexCount, ref NativeArray<int> outIndices, ref int outIndexCount, ref NativeArray<int2> outEdges, ref int outEdgeCount, float areaFactor, float targetArea, int refineIterations, int smoothenIterations)
         {
             // Inputs are garbage, just early out.
             outEdgeCount = 0; outIndexCount = 0; outVertexCount = 0;
@@ -694,15 +805,21 @@ namespace UnityEngine.U2D.Common.UTess
             {
                 // Do Refinement until success.
                 float maxArea = 0;
+                float incArea = 0;
                 int rfEdgeCount = 0, rfPointCount = 0, rfIndexCount = 0, rfVertexCount = 0;
                 NativeArray<int2> rfEdges = new NativeArray<int2>(kMaxEdgeCount, allocator);
                 NativeArray<float2> rfPoints = new NativeArray<float2>(kMaxVertexCount, allocator);
                 NativeArray<int> rfIndices = new NativeArray<int>(kMaxIndexCount, allocator);
                 NativeArray<float2> rfVertices = new NativeArray<float2>(kMaxVertexCount, allocator);
+                ret.x = 0;
+                refineIterations = Math.Min(refineIterations, kMaxRefineIterations);
 
                 if (targetArea != 0)
                 {
-                    while (targetArea < kMaxArea)
+                    // Increment for Iterations.
+                    incArea = (targetArea / 10);
+                    
+                    while (targetArea < kMaxArea && refineIterations > 0)
                     {
                         // Do Mesh Refinement.
                         CopyGraph(points, points.Length, ref rfPoints, ref rfPointCount, edges, edges.Length, ref rfEdges, ref rfEdgeCount);
@@ -718,12 +835,18 @@ namespace UnityEngine.U2D.Common.UTess
                         }
 
                         refined = false;
-                        targetArea = targetArea * 2.0f;
+                        targetArea = targetArea + incArea;
+                        refineIterations--;
                     }
+                    
                 }
                 else if (areaFactor != 0)
                 {
-                    while (areaFactor < 0.8f)
+                    // Increment for Iterations.
+                    areaFactor = math.lerp(0.1f, 0.54f, (areaFactor - 0.05f) / 0.45f); // Specific to Animation.
+                    incArea = (areaFactor / 10);
+                    
+                    while (areaFactor < 0.8f && refineIterations > 0)
                     {
                         // Do Mesh Refinement.
                         CopyGraph(points, points.Length, ref rfPoints, ref rfPointCount, edges, edges.Length, ref rfEdges, ref rfEdgeCount);
@@ -739,27 +862,39 @@ namespace UnityEngine.U2D.Common.UTess
                         }
 
                         refined = false;
-                        areaFactor = areaFactor * 2.0f;
+                        areaFactor = areaFactor + incArea;
+                        refineIterations--;
                     }
                 }
 
                 if (refined)
                 {
+                    // Sanitize generated geometry data.
+                    var preSmoothen = outVertexCount;
+                    if (ret.x != 0)
+                        VertexCleanupConditioner(tsVertexCount, ref rfIndices, ref rfIndexCount, ref rfVertices, ref rfVertexCount);
+
                     // Smoothen. At this point only vertex relocation is allowed, not vertex addition/removal.
                     // Note: Only refined mesh contains Steiner points and we only smoothen these points.
-                    smoothenCount = math.clamp(smoothenCount, 0, kMaxSmoothenIterations);
-                    while (smoothenCount > 0)
+                    ret.y = 0;
+                    smoothenIterations = math.clamp(smoothenIterations, 0, kMaxSmoothenIterations);
+                    while (smoothenIterations > 0)
                     {
                         var smoothen = Smoothen.Condition(allocator, ref rfPoints, rfPointCount, rfEdges, rfEdgeCount, ref rfVertices, ref rfVertexCount, ref rfIndices, ref rfIndexCount);
                         if (!smoothen)
                             break;
                         // Copy Out
-                        ret.y = (float)(smoothenCount);
+                        ret.y = (float)(smoothenIterations);
                         TransferOutput(rfEdges, rfEdgeCount, ref outEdges, ref outEdgeCount, rfIndices, rfIndexCount, ref outIndices, ref outIndexCount, rfVertices, rfVertexCount, ref outVertices, ref outVertexCount);
-                        smoothenCount--;
+                        smoothenIterations--;
                     }
+                    
+                    // Sanitize generated geometry data.
+                    var postSmoothen = outVertexCount;
+                    if (ret.y != 0)
+                        VertexCleanupConditioner(tsVertexCount, ref outIndices, ref outIndexCount, ref outVertices, ref outVertexCount);
                 }
-
+                
                 rfVertices.Dispose();
                 rfIndices.Dispose();
                 rfPoints.Dispose();

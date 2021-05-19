@@ -9,7 +9,8 @@ namespace UnityEngine.U2D.Common.UTess
     {
 
         // This is an arbitrary value less than 2 to ensure points are not moved too far away from the source polygon.
-        private static readonly float kAreaTolerance = 1.842f;
+        private static readonly float kMaxAreaTolerance = 1.842f;
+        private static readonly float kMaxEdgeTolerance = 2.482f;
 
         // Trim Edges
         static void RefineEdges(ref NativeArray<int4> refinedEdges, ref NativeArray<int4> delaEdges, ref int delaEdgeCount, ref NativeArray<int4> voronoiEdges)
@@ -47,7 +48,7 @@ namespace UnityEngine.U2D.Common.UTess
                 }
             }
 
-            UTess.Copy(refinedEdges, delaEdges, delaEdgeCount);
+            ModuleHandle.Copy(refinedEdges, delaEdges, delaEdgeCount);
         }
 
         // Get all the Edges that has this Point.
@@ -142,28 +143,29 @@ namespace UnityEngine.U2D.Common.UTess
             return true;
         }
 
+        
         // Perform Voronoi based Smoothing. Does not add/remove points but merely relocates internal vertices so they are uniform distributed.
-        public static bool Condition(Allocator allocator, ref NativeArray<float2> pgPoints, int pgPointCount, NativeArray<int2> pgEdges, int pgEdgeCount, ref NativeArray<float2> vertices, ref int vertexCount, ref NativeArray<int> indices, ref int indexCount)
+        internal static bool Condition(Allocator allocator, ref NativeArray<float2> pgPoints, int pgPointCount, NativeArray<int2> pgEdges, int pgEdgeCount, ref NativeArray<float2> vertices, ref int vertexCount, ref NativeArray<int> indices, ref int indexCount)
         {
 
             // Build Triangles and Edges.
-            float maxArea = 0, cmpArea = 0;
+            float maxArea = 0, cmxArea = 0, minArea = 0, cmnArea = 0, avgArea = 0, minEdge = 0, maxEdge = 0, avgEdge = 0;
             bool polygonCentroid = true, validGraph = true;
             int triangleCount = 0, delaEdgeCount = 0, affectingEdgeCount = 0;
-            var triangles = new NativeArray<UTriangle>(indexCount / 3, allocator);
+            var triangles = new NativeArray<UTriangle>(indexCount, allocator);    // Intentionally added more room than actual Triangles needed here.
             var delaEdges = new NativeArray<int4>(indexCount, allocator);
             var voronoiEdges = new NativeArray<int4>(indexCount, allocator);
             var connectedTri = new NativeArray<int4>(vertexCount, allocator);
             var voronoiCheck = new NativeArray<int>(indexCount, allocator);
             var affectsEdges = new NativeArray<int>(indexCount, allocator);
             var triCentroids = new NativeArray<int>(vertexCount, allocator);
-            UTess.BuildTrianglesAndEdges(vertices, vertexCount, indices, indexCount, ref triangles, ref triangleCount, ref delaEdges, ref delaEdgeCount, ref maxArea);
+            ModuleHandle.BuildTrianglesAndEdges(vertices, vertexCount, indices, indexCount, ref triangles, ref triangleCount, ref delaEdges, ref delaEdgeCount, ref maxArea, ref avgArea, ref minArea);
             var refinedEdges = new NativeArray<int4>(delaEdgeCount, allocator);
 
             // Sort the Delaunay Edges.
             unsafe
             {
-                UTess.InsertionSort<int4, DelaEdgeCompare>(
+                ModuleHandle.InsertionSort<int4, DelaEdgeCompare>(
                     NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(delaEdges), 0, delaEdgeCount - 1,
                     new DelaEdgeCompare());
             }
@@ -219,7 +221,9 @@ namespace UnityEngine.U2D.Common.UTess
             {
                 validGraph = Tessellator.Tessellate(allocator, pgPoints, pgPointCount, pgEdges, pgEdgeCount, ref vertices, ref vertexCount, ref indices, ref indexCount);
                 if (validGraph)
-                    UTess.BuildTriangles(vertices, vertexCount, indices, indexCount, ref triangles, ref triangleCount, ref cmpArea);
+                    ModuleHandle.BuildTriangles(vertices, vertexCount, indices, indexCount, ref triangles, ref triangleCount, ref cmxArea, ref avgArea, ref cmnArea, ref maxEdge, ref avgEdge, ref minEdge);
+                // This Edge validation prevents artifacts by forcing a fallback. todo: Fix the actual bug in Outline generation.
+                validGraph = validGraph && (cmxArea < maxArea * kMaxAreaTolerance) && (maxEdge < avgEdge * kMaxEdgeTolerance);
             }
 
             // Cleanup.
@@ -231,7 +235,7 @@ namespace UnityEngine.U2D.Common.UTess
             affectsEdges.Dispose();
             triCentroids.Dispose();
             connectedTri.Dispose();
-            return (validGraph && srcIndexCount == indexCount && srcVertexCount == vertexCount && (cmpArea < maxArea * kAreaTolerance));
+            return (validGraph && srcIndexCount == indexCount && srcVertexCount == vertexCount);
 
         }
 

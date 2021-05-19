@@ -35,7 +35,7 @@ namespace UnityEngine.U2D.Common.UTess
         {
             public bool Test(UHull h, float2 p, ref float t)
             {
-                t = UTess.OrientFast(h.a, h.b, p);
+                t = ModuleHandle.OrientFast(h.a, h.b, p);
                 return t < 0;
             }
         }
@@ -44,7 +44,7 @@ namespace UnityEngine.U2D.Common.UTess
         {
             public bool Test(UHull h, float2 p, ref float t)
             {
-                t = UTess.OrientFast(h.a, h.b, p);
+                t = ModuleHandle.OrientFast(h.a, h.b, p);
                 return t > 0;
             }
         }
@@ -54,11 +54,11 @@ namespace UnityEngine.U2D.Common.UTess
             float d = 0;
             if (hull.a.x < edge.a.x)
             {
-                d = UTess.OrientFast(hull.a, hull.b, edge.a);
+                d = ModuleHandle.OrientFast(hull.a, hull.b, edge.a);
             }
             else
             {
-                d = UTess.OrientFast(edge.b, edge.a, hull.a);
+                d = ModuleHandle.OrientFast(edge.b, edge.a, hull.a);
             }
 
             if (0 != d)
@@ -68,11 +68,11 @@ namespace UnityEngine.U2D.Common.UTess
 
             if (edge.b.x < hull.b.x)
             {
-                d = UTess.OrientFast(hull.a, hull.b, edge.b);
+                d = ModuleHandle.OrientFast(hull.a, hull.b, edge.b);
             }
             else
             {
-                d = UTess.OrientFast(edge.b, edge.a, hull.b);
+                d = ModuleHandle.OrientFast(edge.b, edge.a, hull.b);
             }
 
             if (0 != d)
@@ -107,8 +107,8 @@ namespace UnityEngine.U2D.Common.UTess
 
         bool AddPoint(NativeArray<UHull> hulls, int hullCount, NativeArray<float2> points, float2 p, int idx)
         {
-            int l = UTess.GetLower(hulls, hullCount, p, new TestHullPointL());
-            int u = UTess.GetUpper(hulls, hullCount, p, new TestHullPointU());
+            int l = ModuleHandle.GetLower(hulls, hullCount, p, new TestHullPointL());
+            int u = ModuleHandle.GetUpper(hulls, hullCount, p, new TestHullPointU());
             if (l < 0 || u < 0)
                 return false;
             for (int i = l; i < u; ++i)
@@ -116,7 +116,7 @@ namespace UnityEngine.U2D.Common.UTess
                 UHull hull = hulls[i];
 
                 int m = hull.ilcount;
-                while (m > 1 && UTess.OrientFast(points[hull.ilarray[m - 2]], points[hull.ilarray[m - 1]], p) > 0)
+                while (m > 1 && ModuleHandle.OrientFast(points[hull.ilarray[m - 2]], points[hull.ilarray[m - 1]], p) > 0)
                 {
                     int3 c = new int3();
                     c.x = hull.ilarray[m - 1];
@@ -132,7 +132,7 @@ namespace UnityEngine.U2D.Common.UTess
                 hull.ilarray[m] = idx;
 
                 m = hull.iucount;
-                while (m > 1 && UTess.OrientFast(points[hull.iuarray[m - 2]], points[hull.iuarray[m - 1]], p) < 0)
+                while (m > 1 && ModuleHandle.OrientFast(points[hull.iuarray[m - 2]], points[hull.iuarray[m - 1]], p) < 0)
                 {
                     int3 c = new int3();
                     c.x = hull.iuarray[m - 2];
@@ -175,7 +175,7 @@ namespace UnityEngine.U2D.Common.UTess
 
         bool SplitHulls(NativeArray<UHull> hulls, ref int hullCount, NativeArray<float2> points, UEvent evt)
         {
-            int index = UTess.GetLower(hulls, hullCount, evt, new TestHullEventLe());
+            int index = ModuleHandle.GetLower(hulls, hullCount, evt, new TestHullEventLe());
             if (index < 0)
                 return false;
             
@@ -208,7 +208,7 @@ namespace UnityEngine.U2D.Common.UTess
             float2 temp = evt.a;
             evt.a = evt.b;
             evt.b = temp;
-            int index = UTess.GetEqual(hulls, hullCount, evt, new TestHullEventE());
+            int index = ModuleHandle.GetEqual(hulls, hullCount, evt, new TestHullEventE());
             if (index < 0)
                 return false;
 
@@ -261,7 +261,7 @@ namespace UnityEngine.U2D.Common.UTess
 
             unsafe
             {
-                UTess.InsertionSort<int2, TessEdgeCompare>(
+                ModuleHandle.InsertionSort<int2, TessEdgeCompare>(
                     NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(m_Edges), 0, m_Edges.Length - 1,
                     new TessEdgeCompare());
             }
@@ -321,7 +321,7 @@ namespace UnityEngine.U2D.Common.UTess
             int2 e;
             e.x = a < b ? a : b;
             e.y = a > b ? a : b;
-            return UTess.GetEqual(m_Edges, m_Edges.Length, e, new TestEdgePointE());
+            return ModuleHandle.GetEqual(m_Edges, m_Edges.Length, e, new TestEdgePointE());
         }
 
         void AddTriangle(int i, int j, int k)
@@ -399,7 +399,7 @@ namespace UnityEngine.U2D.Common.UTess
                 return true;
             }
 
-            if (UTess.IsInsideCircle(points[a], points[b], points[x], points[y]))
+            if (ModuleHandle.IsInsideCircle(points[a], points[b], points[x], points[y]))
             {
                 if ((2 + stackCount) >= stack.Length)
                     return false;
@@ -475,7 +475,7 @@ namespace UnityEngine.U2D.Common.UTess
                         continue;
                     }
 
-                    if (UTess.IsInsideCircle(points[a], points[b], points[x], points[y]))
+                    if (ModuleHandle.IsInsideCircle(points[a], points[b], points[x], points[y]))
                     {
                         if ((2 + stackCount) >= stack.Length)
                         {
@@ -518,7 +518,7 @@ namespace UnityEngine.U2D.Common.UTess
                     continue;
                 }
 
-                if (!UTess.IsInsideCircle(points[a], points[b], points[x], points[y]))
+                if (!ModuleHandle.IsInsideCircle(points[a], points[b], points[x], points[y]))
                 {
                     continue;
                 }
@@ -574,7 +574,7 @@ namespace UnityEngine.U2D.Common.UTess
             key.x = x;
             key.y = y;
             key.z = z;
-            return UTess.GetEqual(cells, count, key, new TestCellE());
+            return ModuleHandle.GetEqual(cells, count, key, new TestCellE());
         }
 
         NativeArray<int3> Constrain(ref int count)
@@ -606,7 +606,7 @@ namespace UnityEngine.U2D.Common.UTess
 
             unsafe
             {
-                UTess.InsertionSort<int3, TessCellCompare>(
+                ModuleHandle.InsertionSort<int3, TessCellCompare>(
                     NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(cells), 0, m_CellCount - 1,
                     new TessCellCompare());
             }
@@ -734,7 +734,7 @@ namespace UnityEngine.U2D.Common.UTess
             m_NumHulls = edgeCount * 2;
             m_NumPoints = pointCount;
             m_CellCount = 0;
-            m_Cells = new NativeArray<int3>(UTess.kMaxTriangleCount, m_Allocator);
+            m_Cells = new NativeArray<int3>(ModuleHandle.kMaxTriangleCount, m_Allocator);
             m_ILArray = new NativeArray<int>(m_NumHulls * (m_NumHulls + 1), m_Allocator); // Make room for -1 node.
             m_IUArray = new NativeArray<int>(m_NumHulls * (m_NumHulls + 1), m_Allocator); // Make room for -1 node.
 
@@ -797,7 +797,7 @@ namespace UnityEngine.U2D.Common.UTess
 
             unsafe
             {
-                UTess.InsertionSort<UEvent, TessEventCompare>(
+                ModuleHandle.InsertionSort<UEvent, TessEventCompare>(
                     NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(events), 0, eventCount - 1,
                     new TessEventCompare());
                 ;

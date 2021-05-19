@@ -106,14 +106,16 @@ namespace UnityEngine.U2D.Common.UTess
 
             // Process Triangles.
             maxArea = 0.0f;
+            var minArea = 0.0f;
+            var avgArea = 0.0f;
             var refined = false;
             var validGraph = true;
 
             // Temporary Stuffs.
             int triangleCount = 0, invalidTriangle = -1, inputPointCount = pgPointCount;
-            var encroach = new NativeArray<UEncroachingSegment>(UTess.kMaxEdgeCount, allocator);
-            var triangles = new NativeArray<UTriangle>(UTess.kMaxTriangleCount, allocator);
-            UTess.BuildTriangles(vertices, vertexCount, indices, indexCount, ref triangles, ref triangleCount, ref maxArea);
+            var encroach = new NativeArray<UEncroachingSegment>(ModuleHandle.kMaxEdgeCount, allocator);
+            var triangles = new NativeArray<UTriangle>(ModuleHandle.kMaxTriangleCount, allocator);
+            ModuleHandle.BuildTriangles(vertices, vertexCount, indices, indexCount, ref triangles, ref triangleCount, ref maxArea, ref avgArea, ref minArea);
             factorArea = factorArea != 0 ? math.clamp(factorArea, kMinAreaFactor, kMaxAreaFactor) : factorArea;
             var criArea = maxArea * factorArea;
             criArea = math.max(criArea, targetArea);
@@ -165,7 +167,7 @@ namespace UnityEngine.U2D.Common.UTess
                     // Build Internal Triangles.
                     encroachCount = 0; triangleCount = 0; invalidTriangle = -1;
                     if (validGraph)
-                        UTess.BuildTriangles(vertices, vertexCount, indices, indexCount, ref triangles, ref triangleCount, ref maxArea);
+                        ModuleHandle.BuildTriangles(vertices, vertexCount, indices, indexCount, ref triangles, ref triangleCount, ref maxArea, ref avgArea, ref minArea);
 
                     // More than enough Steiner points inserted. This handles all sort of weird input sprites very well (even random point cloud).
                     if (pgPointCount - inputPointCount > kMaxSteinerCount)

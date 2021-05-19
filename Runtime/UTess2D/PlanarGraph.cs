@@ -40,7 +40,7 @@ namespace UnityEngine.U2D.Common.UTess
 
             unsafe
             {
-                UTess.InsertionSort<int2, TessEdgeCompare>(
+                ModuleHandle.InsertionSort<int2, TessEdgeCompare>(
                     NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(edges), 0, edgeCount - 1,
                     new TessEdgeCompare());
             }
@@ -92,15 +92,15 @@ namespace UnityEngine.U2D.Common.UTess
 
         internal static bool LineLineIntersection(double2 a0, double2 a1, double2 b0, double2 b1)
         {
-            var x0 = UTess.OrientFastDouble(a0, b0, b1);
-            var y0 = UTess.OrientFastDouble(a1, b0, b1);
+            var x0 = ModuleHandle.OrientFastDouble(a0, b0, b1);
+            var y0 = ModuleHandle.OrientFastDouble(a1, b0, b1);
             if ((x0 > kEpsilon && y0 > kEpsilon) || (x0 < -kEpsilon && y0 < -kEpsilon))
             {
                 return false;
             }
 
-            var x1 = UTess.OrientFastDouble(b0, a0, a1);
-            var y1 = UTess.OrientFastDouble(b1, a0, a1);
+            var x1 = ModuleHandle.OrientFastDouble(b0, a0, a1);
+            var y1 = ModuleHandle.OrientFastDouble(b1, a0, a1);
             if ((x1 > kEpsilon && y1 > kEpsilon) || (x1 < -kEpsilon && y1 < -kEpsilon))
             {
                 return false;
@@ -183,7 +183,7 @@ namespace UnityEngine.U2D.Common.UTess
                 var tjc = new IntersectionCompare();
                 tjc.edges = edges;
                 tjc.points = points;
-                UTess.InsertionSort<int2, IntersectionCompare>(
+                ModuleHandle.InsertionSort<int2, IntersectionCompare>(
                     NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(results), 0, resultCount - 1, tjc);
             }
 
@@ -245,7 +245,7 @@ namespace UnityEngine.U2D.Common.UTess
 
             unsafe
             {
-                UTess.InsertionSort<int2, TessJunctionCompare>(
+                ModuleHandle.InsertionSort<int2, TessJunctionCompare>(
                     NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(tJunctions), 0, tJunctionCount - 1,
                     new TessJunctionCompare());
             }
@@ -295,9 +295,9 @@ namespace UnityEngine.U2D.Common.UTess
             return true;
         }
 
-        internal static void RemoveDuplicatePoints(ref NativeArray<double2> points, ref int pointCount, ref NativeArray<int> duplicates, ref int duplicateCount)
+        internal static void RemoveDuplicatePoints(ref NativeArray<double2> points, ref int pointCount, ref NativeArray<int> duplicates, ref int duplicateCount, Allocator allocator)
         {
-            TessLink link = TessLink.CreateLink(pointCount);
+            TessLink link = TessLink.CreateLink(pointCount, allocator);
 
             for (int i = 0; i < pointCount; ++i)
             {
@@ -364,17 +364,17 @@ namespace UnityEngine.U2D.Common.UTess
             var validGraph = false;
 
             // Processing Arrays.
-            NativeArray<int2> edges = new NativeArray<int2>(UTess.kMaxEdgeCount, allocator);
-            NativeArray<double2> points = new NativeArray<double2>(UTess.kMaxVertexCount, allocator);
-            NativeArray<int2> tJunctions = new NativeArray<int2>(UTess.kMaxEdgeCount, allocator);
-            NativeArray<int2> edgeIntersections = new NativeArray<int2>(UTess.kMaxEdgeCount, allocator);
-            NativeArray<int> duplicates = new NativeArray<int>(UTess.kMaxVertexCount, allocator);
-            NativeArray<double2> intersects = new NativeArray<double2>(UTess.kMaxEdgeCount, allocator);
+            NativeArray<int2> edges = new NativeArray<int2>(ModuleHandle.kMaxEdgeCount, allocator);
+            NativeArray<double2> points = new NativeArray<double2>(ModuleHandle.kMaxVertexCount, allocator);
+            NativeArray<int2> tJunctions = new NativeArray<int2>(ModuleHandle.kMaxEdgeCount, allocator);
+            NativeArray<int2> edgeIntersections = new NativeArray<int2>(ModuleHandle.kMaxEdgeCount, allocator);
+            NativeArray<int> duplicates = new NativeArray<int>(ModuleHandle.kMaxVertexCount, allocator);
+            NativeArray<double2> intersects = new NativeArray<double2>(ModuleHandle.kMaxEdgeCount, allocator);
 
             // Initialize.
             for (int i = 0; i < pointCount; ++i)
                 points[i] = inputPoints[i];
-            UTess.Copy(inputEdges, edges, edgeCount);
+            ModuleHandle.Copy(inputEdges, edges, edgeCount);
 
             // Pre-clear duplicates, otherwise the following will simply fail.
             RemoveDuplicateEdges(ref edges, ref edgeCount, duplicates, 0);
@@ -401,7 +401,7 @@ namespace UnityEngine.U2D.Common.UTess
 
                 // Remove Duplicate Points.
                 int duplicateCount = 0;
-                RemoveDuplicatePoints(ref points, ref pointCount, ref duplicates, ref duplicateCount);
+                RemoveDuplicatePoints(ref points, ref pointCount, ref duplicates, ref duplicateCount, allocator);
                 RemoveDuplicateEdges(ref edges, ref edgeCount, duplicates, duplicateCount);
 
                 requiresFix = intersectionCount != 0 || tJunctionCount != 0;
@@ -412,7 +412,7 @@ namespace UnityEngine.U2D.Common.UTess
                 // Finalize Output. 
                 outputEdgeCount = edgeCount;
                 outputPointCount = pointCount;
-                UTess.Copy(edges, outputEdges, edgeCount);
+                ModuleHandle.Copy(edges, outputEdges, edgeCount);
                 for (int i = 0; i < pointCount; ++i)
                     outputPoints[i] = new float2((float)points[i].x, (float)points[i].y);
             }

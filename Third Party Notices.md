@@ -11,8 +11,8 @@ May 18, 1996
 
 Placed in the public domain by
 Jonathan Richard Shewchuk
----------
 
+---------
 Component Name: CDT
 
 The MIT License (MIT)
