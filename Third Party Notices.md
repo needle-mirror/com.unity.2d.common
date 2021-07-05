@@ -1,23 +1,25 @@
 This package contains third-party software components governed by the license(s) indicated below:
 ---------
 
-Component Name: Predicates
+Component Name: Routines for Arbitrary Precision Floating-point Arithmetic and Fast Robust Geometric Predicates (predicates.c)
 
-Routines for Arbitrary Precision Floating-point Arithmetic
-and Fast Robust Geometric Predicates
-(predicates.c)
+License Type: Public domain
 
-May 18, 1996
+Copyright owner not applicable
 
-Placed in the public domain by
-Jonathan Richard Shewchuk
+http://www.cs.cmu.edu/afs/cs/project/quake/public/code/predicates.c
+
+License Not Applicable
+
 
 ---------
-Component Name: CDT
+Component Name: cdt2d
 
-The MIT License (MIT)
+License Type: The MIT License
 
 Copyright (c) 2015 Mikola Lysenko
+
+https://github.com/mikolalysenko/cdt2d
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

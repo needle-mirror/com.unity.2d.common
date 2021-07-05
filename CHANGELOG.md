@@ -1,5 +1,9 @@
 # Changelog
 
+## [6.0.0-pre.4] - 2021-07-05
+### Added
+- Internal API for applying Sprite Editor Window changes
+
 ## [6.0.0-pre.3] - 2021-05-19
 ### Fixed
 - Fixed issues in tesselation library.

@@ -4,6 +4,7 @@ using UnityEditor.ShortcutManagement;
 using UnityEditor.U2D.Sprites;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.U2D.Common
 {
@@ -49,6 +50,11 @@ namespace UnityEditor.U2D.Common
             SpriteUtilityWindow.ShowSpriteEditorWindow(obj);
         }
 
+        public static void ApplySpriteEditorWindow()
+        {
+            SpriteUtilityWindow.ApplySpriteEditorWindow();    
+        }
+        
         public static void ApplyWireMaterial()
         {
             HandleUtility.ApplyWireMaterial();
@@ -121,6 +127,11 @@ namespace UnityEditor.U2D.Common
         public static int GetAssetCreationInstanceID_ForNonExistingAssets()
         {
             return ProjectBrowser.kAssetCreationInstanceID_ForNonExistingAssets;
+        }
+        
+        public static VisualElement SceneViewCameraViewVisualElement(SceneView sc)
+        {
+            return sc.cameraViewVisualElement;
         }
     }
 }
