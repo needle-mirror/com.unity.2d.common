@@ -1,5 +1,9 @@
 # Changelog
 
+## [6.0.0] - 2021-08-10
+### Changed
+- Update to release version
+
 ## [6.0.0-pre.4] - 2021-07-05
 ### Added
 - Internal API for applying Sprite Editor Window changes

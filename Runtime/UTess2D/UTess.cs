@@ -686,7 +686,7 @@ namespace UnityEngine.U2D.Common.UTess
             Copy(srcVertices, dstVertices, srcVertexCount);
         }
 
-        static void GraphConditioner(NativeArray<float2> points, ref NativeArray<float2> pgPoints, ref int pgPointCount, ref NativeArray<int2> pgEdges, ref int pgEdgeCount)
+        static void GraphConditioner(NativeArray<float2> points, ref NativeArray<float2> pgPoints, ref int pgPointCount, ref NativeArray<int2> pgEdges, ref int pgEdgeCount, bool resetTopology)
         {
             var min = new float2(math.INFINITY, math.INFINITY);
             var max = float2.zero;
@@ -695,15 +695,20 @@ namespace UnityEngine.U2D.Common.UTess
                 min = math.min(points[i], min);
                 max = math.max(points[i], max);
             }
-            var mid = (max - min) * 0.5f;
+
+            var ext = (max - min);
+            var mid = ext * 0.5f;
             var kNonRect = 0.0001f;
+           
             // Construct a simple convex hull rect!.
+            pgPointCount = resetTopology ? 0 : pgPointCount;
+            var pc = pgPointCount;
+            pgPoints[pgPointCount++] = new float2(min.x, min.y); pgPoints[pgPointCount++] = new float2(min.x - kNonRect, min.y + mid.y); pgPoints[pgPointCount++] = new float2(min.x, max.y); pgPoints[pgPointCount++] = new float2(min.x + mid.x, max.y + kNonRect);
+            pgPoints[pgPointCount++] = new float2(max.x, max.y); pgPoints[pgPointCount++] = new float2(max.x + kNonRect, min.y + mid.y); pgPoints[pgPointCount++] = new float2(max.x, min.y); pgPoints[pgPointCount++] = new float2(min.x + mid.x, min.y - kNonRect);
+            
             pgEdgeCount = 8;
-            pgEdges[0] = new int2(0, 1); pgEdges[1] = new int2(1, 2); pgEdges[2] = new int2(2, 3); pgEdges[3] = new int2(3, 4);
-            pgEdges[4] = new int2(4, 5); pgEdges[5] = new int2(5, 6); pgEdges[6] = new int2(6, 7); pgEdges[7] = new int2(7, 0);
-            pgPointCount = 8;
-            pgPoints[0] = new float2(min.x, min.y); pgPoints[1] = new float2(min.x - kNonRect, min.y + mid.y); pgPoints[2] = new float2(min.x, max.y); pgPoints[3] = new float2(min.x + mid.x, max.y + kNonRect);
-            pgPoints[4] = new float2(max.x, max.y); pgPoints[5] = new float2(max.x + kNonRect, min.y + mid.y); pgPoints[6] = new float2(max.x, min.y); pgPoints[7] = new float2(min.x + mid.x, min.y - kNonRect);
+            pgEdges[0] = new int2(pc + 0, pc + 1); pgEdges[1] = new int2(pc + 1, pc + 2); pgEdges[2] = new int2(pc + 2, pc + 3); pgEdges[3] = new int2(pc + 3, pc + 4);
+            pgEdges[4] = new int2(pc + 4, pc + 5); pgEdges[5] = new int2(pc + 5, pc + 6); pgEdges[6] = new int2(pc + 6, pc + 7); pgEdges[7] = new int2(pc + 7, pc + 0);
         }
         
         // Reorder vertices.
@@ -739,43 +744,98 @@ namespace UnityEngine.U2D.Common.UTess
                 Reorder(startVertexCount,i, ref indices, ref indexCount, ref vertices, ref vertexCount);
             }
             
+        }
+        
+        // Constraint Rect Bounds
+        internal static void ConstrainInternal(Allocator allocator, int srcPointCount, ref NativeArray<float2> outVertices, ref int outVertexCount, ref NativeArray<int> outIndices, ref int outIndexCount)
+        {
+            NativeArray<int> ecIndices = new NativeArray<int>(outIndexCount, allocator);
+            ModuleHandle.Copy(outIndices, ecIndices, outIndexCount);
+            outIndexCount = 0;
+                
+            for (int i = 0; i < ecIndices.Length / 3; ++i)
+            {
+                int x = ecIndices[0 + (i * 3)];
+                int y = ecIndices[1 + (i * 3)];
+                int z = ecIndices[2 + (i * 3)];
+                if (x < srcPointCount && y < srcPointCount && z < srcPointCount)
+                {
+                    outIndices[outIndexCount++] = x;
+                    outIndices[outIndexCount++] = y;
+                    outIndices[outIndexCount++] = z;
+                }
+            }
+
+            outVertexCount = srcPointCount;
+            ecIndices.Dispose();
+        }
+
+        public static float4 ConvexQuad(Allocator allocator, NativeArray<float2> points, NativeArray<int2> edges, ref NativeArray<float2> outVertices, ref int outVertexCount, ref NativeArray<int> outIndices, ref int outIndexCount, ref NativeArray<int2> outEdges, ref int outEdgeCount)
+        {
+            // Inputs are garbage, just early out.
+            float4 ret = float4.zero;
+            outEdgeCount = 0; outIndexCount = 0; outVertexCount = 0;
+            if (points.Length < 3 || points.Length >= kMaxVertexCount)
+                return ret;
+            
+            // Ensure inputs form a proper PlanarGraph.
+            int pgEdgeCount = 0, pgPointCount = 0;
+            NativeArray<int2> pgEdges = new NativeArray<int2>(kMaxEdgeCount, allocator);
+            NativeArray<float2> pgPoints = new NativeArray<float2>(kMaxVertexCount, allocator);
+
+            // Valid Edges and Paths, correct the Planar Graph. If invalid create a simple convex hull rect.
+            GraphConditioner(points, ref pgPoints, ref pgPointCount, ref pgEdges, ref pgEdgeCount, true);
+            Tessellator.Tessellate(allocator, pgPoints, pgPointCount, pgEdges, pgEdgeCount, ref outVertices, ref outVertexCount, ref outIndices, ref outIndexCount);
+            
+            // Dispose Temp Memory. 
+            pgPoints.Dispose();
+            pgEdges.Dispose();
+            return ret;
         }        
         
         public static float4 Tessellate(Allocator allocator, NativeArray<float2> points, NativeArray<int2> edges, ref NativeArray<float2> outVertices, ref int outVertexCount, ref NativeArray<int> outIndices, ref int outIndexCount, ref NativeArray<int2> outEdges, ref int outEdgeCount)
         {
             // Inputs are garbage, just early out.
-            outEdgeCount = 0; outIndexCount = 0; outVertexCount = 0;
-            if (points.Length == 0 || points.Length >= kMaxVertexCount)
-                return float4.zero;
-
-            // Ensure inputs form a proper PlanarGraph.
-            bool validGraph = false;
-            int pgEdgeCount = 0, pgPointCount = 0;
             float4 ret = float4.zero;
+            outEdgeCount = 0; outIndexCount = 0; outVertexCount = 0;
+            if (points.Length < 3 || points.Length >= kMaxVertexCount)
+                return ret;
+            
+            // Ensure inputs form a proper PlanarGraph.
+            bool validGraph = false, handleEdgeCase = false;
+            int pgEdgeCount = 0, pgPointCount = 0;
             NativeArray<int2> pgEdges = new NativeArray<int2>(kMaxEdgeCount, allocator);
             NativeArray<float2> pgPoints = new NativeArray<float2>(kMaxVertexCount, allocator);
 
             // Valid Edges and Paths, correct the Planar Graph. If invalid create a simple convex hull rect.
-            validGraph = PlanarGraph.Validate(allocator, points, points.Length, edges, edges.Length, ref pgPoints, ref pgPointCount, ref pgEdges, ref pgEdgeCount);
+            if (0 != edges.Length)
+            {
+                validGraph = PlanarGraph.Validate(allocator, points, points.Length, edges, edges.Length, ref pgPoints,ref pgPointCount, ref pgEdges, ref pgEdgeCount);
+            }
             if (!validGraph)
-                GraphConditioner(points, ref pgPoints, ref pgPointCount, ref pgEdges, ref pgEdgeCount);
+            {
+                pgPointCount = points.Length;
+                handleEdgeCase = true;
+                ModuleHandle.Copy(points, pgPoints, points.Length);
+                GraphConditioner(points, ref pgPoints, ref pgPointCount, ref pgEdges, ref pgEdgeCount, false);
+            }
 
             // Do a proper Delaunay Triangulation.
             int tsIndexCount = 0, tsVertexCount = 0;
             NativeArray<int> tsIndices = new NativeArray<int>(kMaxIndexCount, allocator);
             NativeArray<float2> tsVertices = new NativeArray<float2>(kMaxVertexCount, allocator);
             validGraph = Tessellator.Tessellate(allocator, pgPoints, pgPointCount, pgEdges, pgEdgeCount, ref tsVertices, ref tsVertexCount, ref tsIndices, ref tsIndexCount);
-            if (!validGraph)
+            if (validGraph)
             {
-                // Create a simplex convex hull rect.
-                GraphConditioner(points, ref pgPoints, ref pgPointCount, ref pgEdges, ref pgEdgeCount);
-                tsIndexCount = 0; tsVertexCount = 0;
-                Tessellator.Tessellate(allocator, pgPoints, pgPointCount, pgEdges, pgEdgeCount, ref tsVertices, ref tsVertexCount, ref tsIndices, ref tsIndexCount);
-            }                
+                // Copy Out
+                TransferOutput(pgEdges, pgEdgeCount, ref outEdges, ref outEdgeCount, tsIndices, tsIndexCount,ref outIndices, ref outIndexCount, tsVertices, tsVertexCount, ref outVertices, ref outVertexCount);
+                if (handleEdgeCase == true)
+                {
+                    outEdgeCount = 0;
+                    ConstrainInternal(allocator, points.Length, ref outVertices, ref outVertexCount, ref outIndices, ref outIndexCount);
+                }
+            }
 
-            // Copy Out
-            TransferOutput(pgEdges, pgEdgeCount, ref outEdges, ref outEdgeCount, tsIndices, tsIndexCount, ref outIndices, ref outIndexCount, tsVertices, tsVertexCount, ref outVertices, ref outVertexCount);            
-            
             // Dispose Temp Memory. 
             tsVertices.Dispose();
             tsIndices.Dispose();
@@ -787,12 +847,12 @@ namespace UnityEngine.U2D.Common.UTess
         public static float4 Subdivide(Allocator allocator, NativeArray<float2> points, NativeArray<int2> edges, ref NativeArray<float2> outVertices, ref int outVertexCount, ref NativeArray<int> outIndices, ref int outIndexCount, ref NativeArray<int2> outEdges, ref int outEdgeCount, float areaFactor, float targetArea, int refineIterations, int smoothenIterations)
         {
             // Inputs are garbage, just early out.
+            float4 ret = float4.zero;
             outEdgeCount = 0; outIndexCount = 0; outVertexCount = 0;
-            if (points.Length == 0)
-                return float4.zero;
+            if (points.Length < 3 || points.Length >= kMaxVertexCount || 0 == edges.Length)
+                return ret;
 
             // Do a proper Delaunay Triangulation.
-            float4 ret = float4.zero;
             int tsIndexCount = 0, tsVertexCount = 0;
             NativeArray<int> tsIndices = new NativeArray<int>(kMaxIndexCount, allocator);
             NativeArray<float2> tsVertices = new NativeArray<float2>(kMaxVertexCount, allocator);
