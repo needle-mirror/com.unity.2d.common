@@ -46,7 +46,6 @@ namespace UnityEditor.U2D.Common
             var backgroundRect = GUILayoutUtility.GetRect(1f, 17f);
 
             var labelRect = backgroundRect;
-            labelRect.xMin += 16f;
             labelRect.xMax -= 20f;
 
             var foldoutRect = backgroundRect;

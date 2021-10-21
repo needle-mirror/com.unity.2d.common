@@ -66,5 +66,15 @@ namespace UnityEngine.U2D.Common
         }
 
 #endif
+
+        public static int ConvertFloatToInt(float f)
+        {
+            return Animations.DiscreteEvaluationAttributeUtilities.ConvertFloatToDiscreteInt(f);
+        }
+        
+        public static float ConvertIntToFloat(int i)
+        {
+            return Animations.DiscreteEvaluationAttributeUtilities.ConvertDiscreteIntToFloat(i);
+        }
     }
 }

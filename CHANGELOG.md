@@ -1,8 +1,16 @@
 # Changelog
 
-## [6.0.0] - 2021-08-10
+## [7.0.0-pre.3] - 2021-10-21
+### Fixed
+- Fixed passing in invalid argument to TextureGenerator for swizzling.
+
+## [7.0.0-pre.2] - 2021-10-11
+### Fixed
+- 1361541 Fix crash encountered when deleting vertices of sprite mesh in SkinningEditor
+
+## [7.0.0-pre.1] - 2021-08-06
 ### Changed
-- Update to release version
+- Update Unity supported version to 2022.1
 
 ## [6.0.0-pre.4] - 2021-07-05
 ### Added

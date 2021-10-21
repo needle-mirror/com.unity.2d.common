@@ -133,5 +133,16 @@ namespace UnityEditor.U2D.Common
         {
             return sc.cameraViewVisualElement;
         }
+
+        public static Vector2 GetOverlaySize(UnityEditor.Overlays.Overlay o)
+        {
+            return o.rootVisualElement.layout.size;
+        }
+
+        public static Rect GetEditorGUILayoutLastRect()
+        {
+            return EditorGUILayout.s_LastRect;
+        }
+        
     }
 }

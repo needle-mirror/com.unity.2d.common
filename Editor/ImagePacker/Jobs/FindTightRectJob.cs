@@ -6,7 +6,7 @@ using Unity.Jobs;
 
 namespace UnityEditor.U2D.Common
 {
-    public struct FindTightRectJob : IJobParallelFor
+    internal struct FindTightRectJob : IJobParallelFor
     {
         [ReadOnly]
         [DeallocateOnJobCompletion]

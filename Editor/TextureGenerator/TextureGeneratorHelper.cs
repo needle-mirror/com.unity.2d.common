@@ -506,7 +506,12 @@ namespace UnityEditor.U2D.Common
             textureGenerationSettings.textureImporterSettings.wrapModeU = TextureWrapMode.Repeat;
             textureGenerationSettings.textureImporterSettings.wrapModeV = TextureWrapMode.Repeat;
             textureGenerationSettings.textureImporterSettings.wrapModeW = TextureWrapMode.Repeat;
-
+            textureGenerationSettings.textureImporterSettings.swizzleR = TextureImporterSwizzle.R;
+            textureGenerationSettings.textureImporterSettings.swizzleG = TextureImporterSwizzle.G;
+            textureGenerationSettings.textureImporterSettings.swizzleB = TextureImporterSwizzle.B;
+            textureGenerationSettings.textureImporterSettings.swizzleA = TextureImporterSwizzle.A;
+            
+            
             foreach (var otherSetting in otherSettings)
             {
                 if (otherSetting != null)

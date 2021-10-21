@@ -1,16 +1,4 @@
 This package contains third-party software components governed by the license(s) indicated below:
----------
-
-Component Name: Routines for Arbitrary Precision Floating-point Arithmetic and Fast Robust Geometric Predicates (predicates.c)
-
-License Type: Public domain
-
-Copyright owner not applicable
-
-http://www.cs.cmu.edu/afs/cs/project/quake/public/code/predicates.c
-
-License Not Applicable
-
 
 ---------
 Component Name: cdt2d
