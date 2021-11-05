@@ -746,30 +746,6 @@ namespace UnityEngine.U2D.Common.UTess
             
         }
         
-        // Constraint Rect Bounds
-        internal static void ConstrainInternal(Allocator allocator, int srcPointCount, ref NativeArray<float2> outVertices, ref int outVertexCount, ref NativeArray<int> outIndices, ref int outIndexCount)
-        {
-            NativeArray<int> ecIndices = new NativeArray<int>(outIndexCount, allocator);
-            ModuleHandle.Copy(outIndices, ecIndices, outIndexCount);
-            outIndexCount = 0;
-                
-            for (int i = 0; i < ecIndices.Length / 3; ++i)
-            {
-                int x = ecIndices[0 + (i * 3)];
-                int y = ecIndices[1 + (i * 3)];
-                int z = ecIndices[2 + (i * 3)];
-                if (x < srcPointCount && y < srcPointCount && z < srcPointCount)
-                {
-                    outIndices[outIndexCount++] = x;
-                    outIndices[outIndexCount++] = y;
-                    outIndices[outIndexCount++] = z;
-                }
-            }
-
-            outVertexCount = srcPointCount;
-            ecIndices.Dispose();
-        }
-
         public static float4 ConvexQuad(Allocator allocator, NativeArray<float2> points, NativeArray<int2> edges, ref NativeArray<float2> outVertices, ref int outVertexCount, ref NativeArray<int> outIndices, ref int outIndexCount, ref NativeArray<int2> outEdges, ref int outEdgeCount)
         {
             // Inputs are garbage, just early out.
@@ -812,33 +788,47 @@ namespace UnityEngine.U2D.Common.UTess
             {
                 validGraph = PlanarGraph.Validate(allocator, points, points.Length, edges, edges.Length, ref pgPoints,ref pgPointCount, ref pgEdges, ref pgEdgeCount);
             }
+            
+            
+// Fallbacks are now handled by the Higher level packages. Enable if UTess needs to handle it.            
+// #if UTESS_QUAD_FALLBACK            
+//             if (!validGraph)
+//             {
+//                 pgPointCount = 0;
+//                 handleEdgeCase = true;
+//                 ModuleHandle.Copy(points, pgPoints, points.Length);
+//                 GraphConditioner(points, ref pgPoints, ref pgPointCount, ref pgEdges, ref pgEdgeCount, false);
+//             }
+// #else
+
+// If its not a valid Graph simply return back input Data without triangulation instead of going through UTess (pointless wasted cpu cycles).           
             if (!validGraph)
             {
-                pgPointCount = points.Length;
-                handleEdgeCase = true;
-                ModuleHandle.Copy(points, pgPoints, points.Length);
-                GraphConditioner(points, ref pgPoints, ref pgPointCount, ref pgEdges, ref pgEdgeCount, false);
+                outEdgeCount = edges.Length;
+                outVertexCount = points.Length;
+                ModuleHandle.Copy(edges, outEdges, edges.Length);
+                ModuleHandle.Copy(points, outVertices, points.Length);                
             }
 
-            // Do a proper Delaunay Triangulation.
-            int tsIndexCount = 0, tsVertexCount = 0;
-            NativeArray<int> tsIndices = new NativeArray<int>(kMaxIndexCount, allocator);
-            NativeArray<float2> tsVertices = new NativeArray<float2>(kMaxVertexCount, allocator);
-            validGraph = Tessellator.Tessellate(allocator, pgPoints, pgPointCount, pgEdges, pgEdgeCount, ref tsVertices, ref tsVertexCount, ref tsIndices, ref tsIndexCount);
-            if (validGraph)
+            // Do a proper Delaunay Triangulation if Inputs are valid.
+            if (pgPointCount > 2 && pgEdgeCount > 2)
             {
-                // Copy Out
-                TransferOutput(pgEdges, pgEdgeCount, ref outEdges, ref outEdgeCount, tsIndices, tsIndexCount,ref outIndices, ref outIndexCount, tsVertices, tsVertexCount, ref outVertices, ref outVertexCount);
-                if (handleEdgeCase == true)
+                int tsIndexCount = 0, tsVertexCount = 0;
+                NativeArray<int> tsIndices = new NativeArray<int>(kMaxIndexCount, allocator);
+                NativeArray<float2> tsVertices = new NativeArray<float2>(kMaxVertexCount, allocator);
+                validGraph = Tessellator.Tessellate(allocator, pgPoints, pgPointCount, pgEdges, pgEdgeCount, ref tsVertices, ref tsVertexCount, ref tsIndices, ref tsIndexCount);
+                if (validGraph)
                 {
-                    outEdgeCount = 0;
-                    ConstrainInternal(allocator, points.Length, ref outVertices, ref outVertexCount, ref outIndices, ref outIndexCount);
+                    // Copy Out
+                    TransferOutput(pgEdges, pgEdgeCount, ref outEdges, ref outEdgeCount, tsIndices, tsIndexCount, ref outIndices, ref outIndexCount, tsVertices, tsVertexCount, ref outVertices, ref outVertexCount);
+                    if (handleEdgeCase == true)
+                        outEdgeCount = 0;
                 }
+                tsVertices.Dispose();
+                tsIndices.Dispose();
             }
 
             // Dispose Temp Memory. 
-            tsVertices.Dispose();
-            tsIndices.Dispose();
             pgPoints.Dispose();
             pgEdges.Dispose();
             return ret;

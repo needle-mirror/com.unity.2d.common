@@ -61,33 +61,15 @@ namespace UnityEngine.U2D.Common.UTess
 
         internal static bool CheckCollinear(double2 a0, double2 a1, double2 b0, double2 b1)
         {
+            double2 a = a0;
+            double2 b = a1;
+            double2 c = b0;
+            double2 d = b1;
 
-            var x0 = a0.x;
-            var y0 = a1.x;
-            var l0 = math.min(x0, y0);
-            var h0 = math.max(x0, y0);
-
-            var x1 = b0.x;
-            var y1 = b1.x;
-            var l1 = math.min(x1, y1);
-            var h1 = math.max(x1, y1);
-
-            if (h1 < l0 || h0 < l1)
-                return false;
-
-            x0 = a0.y;
-            y0 = a1.y;
-            l0 = math.min(x0, y0);
-            h0 = math.max(x0, y0);
-
-            x1 = b0.y;
-            y1 = b1.y;
-            l1 = math.min(x1, y1);
-            h1 = math.max(x1, y1);
-
-            if (h1 < l0 || h0 < l1)
-                return false;
-            return true;
+            double x = (b.y - a.y) / (b.x - a.x);
+            double y = (c.y - a.y) / (c.x - a.x);
+            double z = (d.y - a.y) / (d.x - a.x);
+            return ((!math.isinf(x) || !math.isinf(y) || !math.isinf(z)) && math.abs(x - y) > kEpsilon && math.abs(x - z) > kEpsilon);
         }
 
         internal static bool LineLineIntersection(double2 a0, double2 a1, double2 b0, double2 b1)

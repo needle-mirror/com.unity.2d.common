@@ -1,5 +1,9 @@
 # Changelog
 
+## [6.0.1] - 2021-11-05
+### Fixed
+- Fixed issues in tesselation library.
+
 ## [6.0.0] - 2021-08-10
 ### Changed
 - Update to release version
