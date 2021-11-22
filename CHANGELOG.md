@@ -1,8 +1,12 @@
 # Changelog
 
-## [4.0.4] - 2021-11-22
+## [4.1.0] - 2021-11-22
 ### Added
 - Added internal method to get build target's group name.
+- Added access to the internal helper method IsUsingDeformableBuffer.
+
+### Changed
+- Update minimum Unity release version.
 
 ## [4.0.3] - 2020-10-15
 ### Fixed
