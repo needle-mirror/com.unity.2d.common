@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.4] - 2021-11-22
+### Added
+- Added internal method to get build target's group name.
+
 ## [4.0.3] - 2020-10-15
 ### Fixed
 - Allow 2D Packages to access internal constant value for asset creation instance id
