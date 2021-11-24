@@ -1,5 +1,9 @@
 # Changelog
 
+## [6.0.2] - 2021-11-24
+### Added
+- Added internal method to get build target's group name.
+
 ## [6.0.1] - 2021-11-05
 ### Fixed
 - Fixed issues in tesselation library.

@@ -180,12 +180,12 @@ namespace UnityEditor.U2D.Common
                 ps.Apply();
         }
 
-        public static string GetBuildTargetName(BuildTarget target)
+        public static string GetBuildTargetGroupName(BuildTarget target)
         {
-            BuildPlatform[] validPlatforms = BaseTextureImportPlatformSettings.GetBuildPlayerValidPlatforms();
-            foreach (var bp in validPlatforms)
+            var targetGroup = BuildPipeline.GetBuildTargetGroup(target);
+            foreach (var bp in BuildPlatforms.instance.buildPlatforms)
             {
-                if (bp.defaultTarget == target)
+                if (bp.targetGroup == targetGroup)
                     return bp.name;
             }
             return TextureImporter.defaultPlatformName;
