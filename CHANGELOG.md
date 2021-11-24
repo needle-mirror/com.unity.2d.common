@@ -1,5 +1,13 @@
 # Changelog
 
+## [7.0.0-pre.4] - 2021-11-24
+### Added
+- Added internal method to get build target's group name.
+- Added access to the internal helper method IsUsingDeformableBuffer.
+
+### Fixed
+- Allow internal TextureGenerator helper consider swizzle data. 
+
 ## [7.0.0-pre.3] - 2021-10-21
 ### Fixed
 - Fixed passing in invalid argument to TextureGenerator for swizzling.

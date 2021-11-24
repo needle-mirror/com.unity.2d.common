@@ -104,6 +104,7 @@ namespace UnityEditor.U2D.Common.Path
         private U CreateDataObject()
         {
             var dataObject = ScriptableObject.CreateInstance<U>();
+            dataObject.hideFlags = HideFlags.HideAndDontSave;
             m_DataObjects.Add(dataObject);
             return dataObject;
         }

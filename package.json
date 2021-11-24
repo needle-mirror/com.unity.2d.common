@@ -1,7 +1,7 @@
 {
   "name": "com.unity.2d.common",
   "displayName": "2D Common",
-  "version": "7.0.0-pre.3",
+  "version": "7.0.0-pre.4",
   "unity": "2022.1",
   "description": "2D Common is a package that contains shared functionalities that are used by most of the other 2D packages.",
   "keywords": [
@@ -16,14 +16,14 @@
     "com.unity.burst": "1.5.1"
   },
   "relatedPackages": {
-    "com.unity.2d.common.tests": "7.0.0-pre.3"
+    "com.unity.2d.common.tests": "7.0.0-pre.4"
   },
   "upmCi": {
-    "footprint": "fb4ca665a8d6bcf24f450840f1a7ee0a5fcfe47a"
+    "footprint": "88f22f19a17d80a94d56e8d5670a69ddb3e73b46"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/2d.git",
     "type": "git",
-    "revision": "fc17ecffb5da8133c390aba47276756c1b22f123"
+    "revision": "2ccafc0d438881083c9c1ec71f92ef170494bd59"
   }
 }

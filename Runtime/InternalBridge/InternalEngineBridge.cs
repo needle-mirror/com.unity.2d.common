@@ -16,6 +16,11 @@ namespace UnityEngine.U2D.Common
             spriteRenderer.SetDeformableBuffer(src);
         }
 
+        public static bool IsUsingDeformableBuffer(SpriteRenderer spriteRenderer, IntPtr buffer)
+        {
+            return spriteRenderer.IsUsingDeformableBuffer(buffer);
+        }
+
         public static Vector2 GUIUnclip(Vector2 v)
         {
             return GUIClip.Unclip(v);

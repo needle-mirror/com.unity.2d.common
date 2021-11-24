@@ -28,7 +28,15 @@ namespace UnityEditor.U2D.Common
         bool m_EnablePostProcessor;
         [SerializeField]
         SecondarySpriteTexture[] m_SecondaryTextures;
-
+        [SerializeField]
+        TextureImporterSwizzle m_SwizzleR = TextureImporterSwizzle.R;
+        [SerializeField]
+        TextureImporterSwizzle m_SwizzleG = TextureImporterSwizzle.G;
+        [SerializeField]
+        TextureImporterSwizzle m_SwizzleB = TextureImporterSwizzle.B;
+        [SerializeField]
+        TextureImporterSwizzle m_SwizzleA = TextureImporterSwizzle.A;
+        
         public TextureSettings()
         {
             colorTexture = true;
@@ -69,7 +77,10 @@ namespace UnityEditor.U2D.Common
         public string assetPath { get; set; }
         public bool containsAlpha { get; set; }
         public bool hdr { get; set; }
-
+        public TextureImporterSwizzle swizzleR { get { return m_SwizzleR; } set { m_SwizzleR = value; } } 
+        public TextureImporterSwizzle swizzleG { get { return m_SwizzleG; } set { m_SwizzleG = value; } } 
+        public TextureImporterSwizzle swizzleB { get { return m_SwizzleB; } set { m_SwizzleB = value; } } 
+        public TextureImporterSwizzle swizzleA { get { return m_SwizzleA; } set { m_SwizzleA = value; } } 
         public SecondarySpriteTexture[] secondaryTextures { get { return m_SecondaryTextures;} set { m_SecondaryTextures = value; } }
 
         void ITextureSettings.FillTextureGenerationSettings(ref TextureGenerationSettings settings)
@@ -84,6 +95,10 @@ namespace UnityEditor.U2D.Common
             settings.sourceTextureInformation.containsAlpha = containsAlpha;
             settings.sourceTextureInformation.hdr = hdr;
             settings.secondarySpriteTextures = secondaryTextures;
+            settings.textureImporterSettings.swizzleR = m_SwizzleR;
+            settings.textureImporterSettings.swizzleG = m_SwizzleG;
+            settings.textureImporterSettings.swizzleB = m_SwizzleB;
+            settings.textureImporterSettings.swizzleA = m_SwizzleA;
         }
     }
 
@@ -528,6 +543,10 @@ namespace UnityEditor.U2D.Common
             ts.npotScale = tis.npotScale;
             ts.filterMode = tis.filterMode;
             ts.aniso = tis.aniso;
+            ts.swizzleR = tis.swizzleR;
+            ts.swizzleG = tis.swizzleG;
+            ts.swizzleB = tis.swizzleB;
+            ts.swizzleA = tis.swizzleA;
             return ts;
         }
 
