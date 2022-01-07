@@ -1,3 +1,4 @@
+using System;
 using UnityEngine.UIElements;
 using Unity.Collections;
 
@@ -13,6 +14,11 @@ namespace UnityEngine.U2D.Common
         public static void SetDeformableBuffer(SpriteRenderer spriteRenderer, NativeArray<byte> src)
         {
             spriteRenderer.SetDeformableBuffer(src);
+        }
+
+        public static bool IsUsingDeformableBuffer(SpriteRenderer spriteRenderer, IntPtr buffer)
+        {
+            return spriteRenderer.IsUsingDeformableBuffer(buffer);
         }
 
         public static Vector2 GUIUnclip(Vector2 v)

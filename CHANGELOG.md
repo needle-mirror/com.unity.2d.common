@@ -1,7 +1,11 @@
 # Changelog
 
+## [2.1.1] - 2022-01-07
+### Added
+- Added access to the internal helper method IsUsingDeformableBuffer.
+
 ## [2.1.0] - 2020-11-16
-###Changed
+### Changed
 - Minor version bump due to change in required Unity version
 
 ## [2.0.3] - 2020-08-10
