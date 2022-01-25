@@ -84,6 +84,11 @@ namespace UnityEditor.U2D.Common.Path
             get { return m_ControlPoints.Count; }
         }
 
+        public ControlPoint GetPointLocal(int index)
+        {
+            return m_ControlPoints[index];
+        }        
+        
         public ControlPoint GetPoint(int index)
         {
             return TransformPoint(localToWorldMatrix, m_ControlPoints[index]);

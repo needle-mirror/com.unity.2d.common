@@ -173,15 +173,11 @@ namespace UnityEditor.U2D.Common.Path
                 MonoBehaviour behavior = path.owner as MonoBehaviour;
                 if (!behavior || activeObject != behavior.gameObject)
                     continue;
-                
                 var selection = path.selection;
-                var matrix = path.localToWorldMatrix;
-
-                path.localToWorldMatrix = Matrix4x4.identity;
-
+                
                 foreach (var index in selection.elements)
                 {
-                    var controlPoint = path.GetPoint(index);
+                    var controlPoint = path.GetPointLocal(index);
 
                     if (first)
                     {
@@ -193,8 +189,6 @@ namespace UnityEditor.U2D.Common.Path
                         return true;
                     }
                 }
-
-                path.localToWorldMatrix = matrix;
             }
             
             return false;

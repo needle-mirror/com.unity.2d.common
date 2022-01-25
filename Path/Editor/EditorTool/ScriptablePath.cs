@@ -84,6 +84,11 @@ namespace UnityEditor.U2D.Common.Path
             m_EditablePath.Clear();
         }
 
+        public virtual ControlPoint GetPointLocal(int index)
+        {
+            return m_EditablePath.GetPointLocal(index);
+        }        
+        
         public virtual ControlPoint GetPoint(int index)
         {
             return m_EditablePath.GetPoint(index);

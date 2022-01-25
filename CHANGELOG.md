@@ -1,5 +1,13 @@
 # Changelog
 
+## [7.0.0] - 2022-01-25
+### Changed
+- Package release version.
+
+### Fixed
+- 1382695 Fixed case where control point selection flickers when drag and multi-select points in scene
+- Optimized texture space needed for rect packing
+
 ## [7.0.0-pre.4] - 2021-11-24
 ### Added
 - Added internal method to get build target's group name.
@@ -7,6 +15,9 @@
 
 ### Fixed
 - Allow internal TextureGenerator helper consider swizzle data. 
+
+### Fixed
+- 1368956 Deleting certain vertices in sprite mesh leads to mesh resetted to quad incorrectly
 
 ## [7.0.0-pre.3] - 2021-10-21
 ### Fixed
