@@ -341,6 +341,9 @@ namespace UnityEngine.U2D.Common.UTess
         internal static bool Validate(Allocator allocator, NativeArray<float2> inputPoints, int pointCount, NativeArray<int2> inputEdges, int edgeCount, ref NativeArray<float2> outputPoints, ref int outputPointCount, ref NativeArray<int2> outputEdges, ref int outputEdgeCount)
         {
 
+            // Outline generated inputs can have differences in the range of 0.00001f.. See TwoLayers.psb sample.
+            // Since PlanarGraph operates on double, scaling up and down does not result in loss of data. 
+            var precisionFudge = 10000.0f;
             var protectLoop = edgeCount;
             var requiresFix = true;
             var validGraph = false;
@@ -355,7 +358,7 @@ namespace UnityEngine.U2D.Common.UTess
 
             // Initialize.
             for (int i = 0; i < pointCount; ++i)
-                points[i] = inputPoints[i];
+                points[i] = inputPoints[i] * precisionFudge;
             ModuleHandle.Copy(inputEdges, edges, edgeCount);
 
             // Pre-clear duplicates, otherwise the following will simply fail.
@@ -396,7 +399,7 @@ namespace UnityEngine.U2D.Common.UTess
                 outputPointCount = pointCount;
                 ModuleHandle.Copy(edges, outputEdges, edgeCount);
                 for (int i = 0; i < pointCount; ++i)
-                    outputPoints[i] = new float2((float)points[i].x, (float)points[i].y);
+                    outputPoints[i] = new float2((float)(points[i].x / precisionFudge), (float)(points[i].y / precisionFudge));
             }
 
             edges.Dispose();

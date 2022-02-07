@@ -1,8 +1,14 @@
 # Changelog
 
+## [6.0.3] - 2022-02-07
+### Fixed
+- Collinear vertices can be now safely deleted from the sprite mesh in Skinning Editor. (case 1383248)
+- Optimized texture space needed for rect packing
+
 ## [6.0.2] - 2021-11-24
 ### Added
 - Added internal method to get build target's group name.
+- Added access to the internal helper method IsUsingDeformableBuffer.
 
 ## [6.0.1] - 2021-11-05
 ### Fixed
