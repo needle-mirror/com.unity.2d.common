@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.1.2] - 2022-02-22
+### Fixed
+- Optimized texture space needed for rect packing
+
 ## [2.1.1] - 2022-01-07
 ### Added
 - Added access to the internal helper method IsUsingDeformableBuffer.

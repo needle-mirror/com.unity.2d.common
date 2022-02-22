@@ -63,7 +63,7 @@ namespace UnityEditor.U2D.Common
                 {
                     outUVTransform[i] = new Vector2Int(outPackedRect[i].x - tightRects[i].x, outPackedRect[i].y - tightRects[i].y);
                 }
-                outPackedBuffer = new NativeArray<Color32>(outPackedBufferWidth * outPackedBufferHeight, Allocator.Temp);
+                outPackedBuffer = new NativeArray<Color32>(outPackedBufferWidth * outPackedBufferHeight, Allocator.Persistent);
 
                 Blit(outPackedBuffer, outPackedRect, outPackedBufferWidth, buffers, tightRects, width, padding);
             }
@@ -90,9 +90,10 @@ namespace UnityEditor.U2D.Common
                 sortedRects[i].rect = rects[i];
                 sortedRects[i].index = i;
             }
+            var initialHeight = (int)NextPowerOfTwo((ulong)rects[0].height);
             Array.Sort<ImagePackRect>(sortedRects);
             var root = new ImagePackNode();
-            root.rect = new RectInt(0, 0, (int)NextPowerOfTwo((ulong)rects[0].width), (int)NextPowerOfTwo((ulong)rects[0].height));
+            root.rect = new RectInt(0, 0, (int)NextPowerOfTwo((ulong)rects[0].width), initialHeight);
 
             for (int i = 0; i < rects.Length; ++i)
             {
@@ -100,7 +101,11 @@ namespace UnityEditor.U2D.Common
                 {
                     int newWidth = root.rect.width , newHeight = root.rect.height;
                     if (root.rect.width < root.rect.height)
+                    {
                         newWidth = (int)NextPowerOfTwo((ulong)root.rect.width + 1);
+                        // Every time height changes, we reset height to grow again.
+                        newHeight = initialHeight;
+                    }
                     else
                         newHeight = (int)NextPowerOfTwo((ulong)root.rect.height + 1);
                     // Reset all packing and try again
