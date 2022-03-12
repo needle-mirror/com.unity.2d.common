@@ -1,12 +1,20 @@
 # Changelog
 
+## [4.2.0] - 2022-03-12
+### Changed
+- Updated minimum Unity release version required for the package to 2020.3.26f1.
+
+## [4.1.1] - 2022-02-21
+### Fixed
+- Optimized texture space needed for rect packing
+
 ## [4.1.0] - 2021-11-22
 ### Added
 - Added internal method to get build target's group name.
 - Added access to the internal helper method IsUsingDeformableBuffer.
 
 ### Changed
-- Update minimum Unity release version.
+- Updated minimum Unity release version required for the package to 2020.3.25f1.
 
 ## [4.0.3] - 2020-10-15
 ### Fixed
