@@ -349,12 +349,12 @@ namespace UnityEngine.U2D.Common.UTess
             var validGraph = false;
 
             // Processing Arrays.
+            NativeArray<int> duplicates = new NativeArray<int>(ModuleHandle.kMaxEdgeCount, allocator);
             NativeArray<int2> edges = new NativeArray<int2>(ModuleHandle.kMaxEdgeCount, allocator);
-            NativeArray<double2> points = new NativeArray<double2>(ModuleHandle.kMaxVertexCount, allocator);
             NativeArray<int2> tJunctions = new NativeArray<int2>(ModuleHandle.kMaxEdgeCount, allocator);
             NativeArray<int2> edgeIntersections = new NativeArray<int2>(ModuleHandle.kMaxEdgeCount, allocator);
-            NativeArray<int> duplicates = new NativeArray<int>(ModuleHandle.kMaxVertexCount, allocator);
-            NativeArray<double2> intersects = new NativeArray<double2>(ModuleHandle.kMaxEdgeCount, allocator);
+            NativeArray<double2> points = new NativeArray<double2>(pointCount * 8, allocator);
+            NativeArray<double2> intersects = new NativeArray<double2>(pointCount * 8, allocator);
 
             // Initialize.
             for (int i = 0; i < pointCount; ++i)

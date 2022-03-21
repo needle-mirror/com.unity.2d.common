@@ -1,8 +1,8 @@
 {
   "name": "com.unity.2d.common",
   "displayName": "2D Common",
-  "version": "7.0.0",
-  "unity": "2022.1",
+  "version": "8.0.0-pre.1",
+  "unity": "2022.2",
   "description": "2D Common is a package that contains shared functionalities that are used by most of the other 2D packages.",
   "keywords": [
     "2d"
@@ -13,17 +13,20 @@
     "com.unity.mathematics": "1.1.0",
     "com.unity.modules.uielements": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
-    "com.unity.burst": "1.6.0"
+    "com.unity.burst": "1.5.1"
   },
   "relatedPackages": {
-    "com.unity.2d.common.tests": "7.0.0"
+    "com.unity.2d.common.tests": "8.0.0-pre.1"
+  },
+  "upm": {
+    "changelog": "### Changed\n- Minimized memory allocated for UTess."
   },
   "upmCi": {
-    "footprint": "c37a66220c53cc06c06ed9175c6bfbd17958c301"
+    "footprint": "716d33df387c38fe37055782dc69b53e86ec8314"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/2d.git",
     "type": "git",
-    "revision": "9b89f439ca5c8ef326594d90bc874e30e9e37104"
+    "revision": "be5115e7e9c707d0d5ac963699d8a6d45e4ae3a6"
   }
 }

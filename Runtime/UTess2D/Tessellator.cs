@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Profiling;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Collections.LowLevel.Unsafe;
@@ -144,7 +145,7 @@ namespace UnityEngine.U2D.Common.UTess
 
                 hull.iucount = m + 1;
                 if (hull.iucount > hull.iuarray.Length)
-                    return false;                
+                    return false;
                 hull.iuarray[m] = idx;
 
                 hulls[i] = hull;
@@ -178,7 +179,7 @@ namespace UnityEngine.U2D.Common.UTess
             int index = ModuleHandle.GetLower(hulls, hullCount, evt, new TestHullEventLe());
             if (index < 0)
                 return false;
-            
+
             UHull hull = hulls[index];
 
             UHull newHull;
@@ -437,6 +438,10 @@ namespace UnityEngine.U2D.Common.UTess
 
         internal bool ApplyDelaunay(NativeArray<float2> points, NativeArray<int2> edges)
         {
+
+            // Early out if cannot find any valid cells.
+            if (0 == m_CellCount)
+                return false;
 
             NativeArray<int> stack = new NativeArray<int>(m_NumPoints * (m_NumPoints + 1), m_Allocator);
             int stackCount = 0;
@@ -816,8 +821,8 @@ namespace UnityEngine.U2D.Common.UTess
             hull.ilcount = 0;
             hull.iucount = 0;
             hulls[hullCount++] = hull;
-            
-            
+
+
             for (int i = 0, numEvents = eventCount; i < numEvents; ++i)
             {
 
@@ -857,8 +862,11 @@ namespace UnityEngine.U2D.Common.UTess
             Tessellator tess = new Tessellator();
             tess.SetAllocator(allocator);
             int maxCount = 0, triCount = 0;
-            var valid = tess.Triangulate(pgPoints, pgPointCount, pgEdges, pgEdgeCount);
+            var valid = true;
+
+            valid = tess.Triangulate(pgPoints, pgPointCount, pgEdges, pgEdgeCount);
             valid = valid && tess.ApplyDelaunay(pgPoints, pgEdges);
+
             if (valid)
             {
                 // Output.

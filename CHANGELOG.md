@@ -1,5 +1,9 @@
 # Changelog
 
+## [8.0.0-pre.1] - 2022-03-21
+### Changed
+- Minimized memory allocated for UTess.
+
 ## [7.0.0] - 2022-01-25
 ### Changed
 - Package release version.

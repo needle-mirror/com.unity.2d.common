@@ -57,6 +57,11 @@ namespace UnityEngine.U2D.Common
         {
             return (element.pseudoStates & PseudoStates.Checked) == PseudoStates.Checked;
         }
+        
+        public static bool IsHovered(this VisualElement element)
+        {
+            return (element.pseudoStates & PseudoStates.Hover) == PseudoStates.Hover;
+        }
 
         public static void SetChecked(this VisualElement element, bool isChecked)
         {

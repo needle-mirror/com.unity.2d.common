@@ -44,12 +44,13 @@ namespace UnityEditor.U2D.Common
         /// <param name="width">Image buffers width</param>
         /// <param name="height">Image buffers height</param>
         /// <param name="padding">Padding between each packed image</param>
+        /// <param name="spriteSizeExpand">Pack sprite expand size</param>
         /// <param name="outPackedBuffer">Packed image buffer</param>
         /// <param name="outPackedBufferWidth">Packed image buffer's width</param>
         /// <param name="outPackedBufferHeight">Packed iamge buffer's height</param>
         /// <param name="outPackedRect">Location of each image buffers in the packed buffer</param>
         /// <param name="outUVTransform">Translation data from image original buffer to packed buffer</param>
-        public static void Pack(NativeArray<Color32>[] buffers, int width, int height, int padding, out NativeArray<Color32> outPackedBuffer, out int outPackedBufferWidth, out int outPackedBufferHeight, out RectInt[] outPackedRect, out Vector2Int[] outUVTransform)
+        public static void Pack(NativeArray<Color32>[] buffers, int width, int height, int padding, uint spriteSizeExpand, out NativeArray<Color32> outPackedBuffer, out int outPackedBufferWidth, out int outPackedBufferHeight, out RectInt[] outPackedRect, out Vector2Int[] outUVTransform)
         {
             UnityEngine.Profiling.Profiler.BeginSample("Pack");
             // Determine the area that contains data in the buffer
@@ -57,8 +58,22 @@ namespace UnityEditor.U2D.Common
             try
             {
                 var tightRects = FindTightRectJob.Execute(buffers, width, height);
-                Pack(tightRects, padding, out outPackedRect, out outPackedBufferWidth, out outPackedBufferHeight);
-                outUVTransform = new Vector2Int[tightRects.Length];
+                var tightRectArea = new RectInt[tightRects.Length];
+                for (int i = 0; i < tightRects.Length; ++i)
+                {
+                    var t = tightRects[i];
+                    t.width = tightRects[i].width + (int)spriteSizeExpand;
+                    t.height = tightRects[i].height + (int)spriteSizeExpand;
+                    tightRectArea[i] = t;
+                }
+                Pack(tightRectArea, padding, out outPackedRect, out outPackedBufferWidth, out outPackedBufferHeight);
+                var packBufferSize = (ulong)outPackedBufferWidth * (ulong)outPackedBufferHeight;
+
+                if (packBufferSize < 0 || packBufferSize >= int.MaxValue)
+                {
+                    throw new ArgumentException("Unable to create pack texture. Image size is too big to pack.");
+                }
+                outUVTransform = new Vector2Int[tightRectArea.Length];
                 for (int i = 0; i < outUVTransform.Length; ++i)
                 {
                     outUVTransform[i] = new Vector2Int(outPackedRect[i].x - tightRects[i].x, outPackedRect[i].y - tightRects[i].y);
@@ -127,12 +142,16 @@ namespace UnityEditor.U2D.Common
                 var b = (Color32*)originalBuffer[bufferIndex].GetUnsafeReadOnlyPtr();
                 var rectFrom = blitFromArea[bufferIndex];
                 var rectTo = blitToArea[bufferIndex];
-                for (int i = 0; i < rectFrom.height; ++i)
+                int toXStart = (int)(rectTo.width * 0.5f - rectFrom.width * 0.5f);
+                int toYStart = (int)(rectTo.height * 0.5f - rectFrom.height * 0.5f);
+                toXStart = toXStart <= 0 ? rectTo.x : toXStart + rectTo.x;
+                toYStart = toYStart <= 0 ? rectTo.y : toYStart + rectTo.y;
+                for (int i = 0; i < rectFrom.height && i < rectTo.height; ++i)
                 {
-                    for (int j = 0; j < rectFrom.width; ++j)
+                    for (int j = 0; j < rectFrom.width && j < rectTo.width; ++j)
                     {
                         Color32 cc = b[(rectFrom.y + i) * bytesPerRow + rectFrom.x + j];
-                        c[((rectTo.y + i) * bufferbytesPerRow) + rectTo.x + j] = cc;
+                        c[((toYStart + i) * bufferbytesPerRow) + toXStart + j] = cc;
                     }
                 }
             }
