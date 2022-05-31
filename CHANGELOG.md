@@ -1,5 +1,9 @@
 # Changelog
 
+## [8.0.0-pre.2] - 2022-05-31
+### Added
+- Moved internal API from animation to common package.
+
 ## [8.0.0-pre.1] - 2022-03-21
 ### Changed
 - Minimized memory allocated for UTess.
