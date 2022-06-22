@@ -1,5 +1,10 @@
 # Changelog
 
+## [7.0.1] - 2022-06-22
+### Changed
+- Refactored internal triangulation and tessellation APIs.
+- Update com.unity.burst dependency version to 1.7.3 to support latest PS4 SDK.
+
 ## [7.0.0] - 2022-01-25
 ### Changed
 - Package release version.
