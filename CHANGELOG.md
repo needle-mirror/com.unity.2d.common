@@ -1,5 +1,9 @@
 # Changelog
 
+## [6.0.4] - 2022-06-28
+### Changed
+- Refactored internal triangulation and tessellation APIs.
+
 ## [6.0.3] - 2022-02-07
 ### Fixed
 - Collinear vertices can be now safely deleted from the sprite mesh in Skinning Editor. (case 1383248)

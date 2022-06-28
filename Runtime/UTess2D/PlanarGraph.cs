@@ -338,9 +338,11 @@ namespace UnityEngine.U2D.Common.UTess
         }
 
         // Validate the Input Points ane Edges.
-        internal static bool Validate(Allocator allocator, NativeArray<float2> inputPoints, int pointCount, NativeArray<int2> inputEdges, int edgeCount, ref NativeArray<float2> outputPoints, ref int outputPointCount, ref NativeArray<int2> outputEdges, ref int outputEdgeCount)
+        internal static bool Validate(Allocator allocator, in NativeArray<float2> inputPoints, int pointCount, in NativeArray<int2> inputEdges, int edgeCount, ref NativeArray<float2> outputPoints, out int outputPointCount, ref NativeArray<int2> outputEdges, out int outputEdgeCount)
         {
-
+            outputPointCount = 0;
+            outputEdgeCount = 0;
+            
             // Outline generated inputs can have differences in the range of 0.00001f.. See TwoLayers.psb sample.
             // Since PlanarGraph operates on double, scaling up and down does not result in loss of data. 
             var precisionFudge = 10000.0f;

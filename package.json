@@ -1,7 +1,7 @@
 {
   "name": "com.unity.2d.common",
   "displayName": "2D Common",
-  "version": "6.0.3",
+  "version": "6.0.4",
   "unity": "2021.2",
   "unityRelease": "7f1",
   "description": "2D Common is a package that contains shared functionalities that are used by most of the other 2D packages.",
@@ -16,14 +16,17 @@
     "com.unity.burst": "1.5.1"
   },
   "relatedPackages": {
-    "com.unity.2d.common.tests": "6.0.3"
+    "com.unity.2d.common.tests": "6.0.4"
+  },
+  "_upm": {
+    "changelog": "### Changed\n- Refactored internal triangulation and tessellation APIs."
   },
   "upmCi": {
-    "footprint": "a4c6f5fa03e88433c315e28c48499f90f855ee76"
+    "footprint": "d079c4cbe41fad47b0ce9b9687442b13b3a9b18b"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/2d.git",
     "type": "git",
-    "revision": "41fd674f8e4b2265bdbc50291dced1bd86c590ee"
+    "revision": "6b783c5dfb5a72d73e2b0a70d1caf4a367c58805"
   }
 }
