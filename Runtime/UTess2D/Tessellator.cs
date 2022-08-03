@@ -14,7 +14,7 @@ namespace UnityEngine.U2D.Common.UTess
         // For Processing.
         NativeArray<int2> m_Edges;
         NativeArray<UStar> m_Stars;
-        NativeArray<int3> m_Cells;
+        Array<int3> m_Cells;
         int m_CellCount;
 
         // For Storage.
@@ -739,9 +739,10 @@ namespace UnityEngine.U2D.Common.UTess
             m_NumHulls = edgeCount * 2;
             m_NumPoints = pointCount;
             m_CellCount = 0;
-            m_Cells = new NativeArray<int3>(ModuleHandle.kMaxTriangleCount, m_Allocator);
-            m_ILArray = new NativeArray<int>(m_NumHulls * (m_NumHulls + 1), m_Allocator); // Make room for -1 node.
-            m_IUArray = new NativeArray<int>(m_NumHulls * (m_NumHulls + 1), m_Allocator); // Make room for -1 node.
+            int allocSize = m_NumHulls * (m_NumHulls + 1);
+            m_Cells = new Array<int3>(allocSize, ModuleHandle.kMaxTriangleCount, m_Allocator, NativeArrayOptions.UninitializedMemory);
+            m_ILArray = new NativeArray<int>(allocSize, m_Allocator); // Make room for -1 node.
+            m_IUArray = new NativeArray<int>(allocSize, m_Allocator); // Make room for -1 node.
 
             NativeArray<UHull> hulls = new NativeArray<UHull>(m_NumPoints * 8, m_Allocator);
             int hullCount = 0;

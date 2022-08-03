@@ -10,17 +10,17 @@ namespace UnityEngine.U2D.Common.UTess
         // Old min and max are 0.5 and 0.05. We pretty much do the same with some relaxing on both ends.
         private static readonly float kMinAreaFactor = 0.0482f;
         private static readonly float kMaxAreaFactor = 0.4820f;
-        // After doing more tests with a number of Sprites, this is area to which we can reduce to considering quality and CPU cost. 
+        // After doing more tests with a number of Sprites, this is area to which we can reduce to considering quality and CPU cost.
         private static readonly int kMaxSteinerCount = 4084;
 
         // Check if Triangle is Ok.
         static bool RequiresRefining(UTriangle tri, float maxArea)
         {
-            // Add any further criteria later on. 
+            // Add any further criteria later on.
             return (tri.area > maxArea);
         }
 
-        static void FetchEncroachedSegments(NativeArray<float2> pgPoints, int pgPointCount, NativeArray<int2> pgEdges, int pgEdgeCount, ref NativeArray<UEncroachingSegment> encroach, ref int encroachCount, UCircle c)
+        static void FetchEncroachedSegments(NativeArray<float2> pgPoints, int pgPointCount, NativeArray<int2> pgEdges, int pgEdgeCount, ref Array<UEncroachingSegment> encroach, ref int encroachCount, UCircle c)
         {
             for (int i = 0; i < pgEdgeCount; ++i)
             {
@@ -113,7 +113,7 @@ namespace UnityEngine.U2D.Common.UTess
 
             // Temporary Stuffs.
             int triangleCount = 0, invalidTriangle = -1, inputPointCount = pgPointCount;
-            var encroach = new NativeArray<UEncroachingSegment>(ModuleHandle.kMaxEdgeCount, allocator);
+            var encroach = new Array<UEncroachingSegment>(inputPointCount, ModuleHandle.kMaxEdgeCount, allocator, NativeArrayOptions.UninitializedMemory);
             var triangles = new NativeArray<UTriangle>(ModuleHandle.kMaxTriangleCount, allocator);
             ModuleHandle.BuildTriangles(vertices, vertexCount, indices, indexCount, ref triangles, ref triangleCount, ref maxArea, ref avgArea, ref minArea);
             factorArea = factorArea != 0 ? math.clamp(factorArea, kMinAreaFactor, kMaxAreaFactor) : factorArea;
@@ -134,7 +134,7 @@ namespace UnityEngine.U2D.Common.UTess
                     }
                 }
 
-                // Find any Segment that can be Split based on the Input Length. 
+                // Find any Segment that can be Split based on the Input Length.
                 // todo.
 
                 if (invalidTriangle != -1)

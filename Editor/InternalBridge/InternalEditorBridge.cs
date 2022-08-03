@@ -143,6 +143,10 @@ namespace UnityEditor.U2D.Common
         {
             return EditorGUILayout.s_LastRect;
         }
-        
+
+        public static string TextureImporterDefaultPlatformName()
+        {
+            return TextureImporter.defaultPlatformName;
+        }
     }
 }

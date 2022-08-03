@@ -1,5 +1,10 @@
 # Changelog
 
+## [8.0.0] - 2022-08-03
+### Changed
+- Refactored internal triangulation and tessellation APIs.
+- Update com.unity.burst dependency version to 1.7.3 to support latest PS4 SDK.
+
 ## [8.0.0-pre.2] - 2022-05-31
 ### Added
 - Moved internal API from animation to common package.

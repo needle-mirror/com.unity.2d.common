@@ -12,7 +12,7 @@ namespace UnityEngine.U2D.Common.UTess
         private static readonly double kEpsilon = 0.00001;
         private static readonly int kMaxIntersectionTolerance = 4;  // Maximum Intersection Tolerance per Intersection Loop Check.
 
-        internal static void RemoveDuplicateEdges(ref NativeArray<int2> edges, ref int edgeCount, NativeArray<int> duplicates, int duplicateCount)
+        internal static void RemoveDuplicateEdges(ref Array<int2> edges, ref int edgeCount, Array<int> duplicates, int duplicateCount)
         {
 
             if (duplicateCount == 0)
@@ -40,9 +40,7 @@ namespace UnityEngine.U2D.Common.UTess
 
             unsafe
             {
-                ModuleHandle.InsertionSort<int2, TessEdgeCompare>(
-                    NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(edges), 0, edgeCount - 1,
-                    new TessEdgeCompare());
+                ModuleHandle.InsertionSort<int2, TessEdgeCompare>(edges.UnsafePtr, 0, edgeCount - 1,new TessEdgeCompare());
             }
 
             var n = 1;
@@ -121,7 +119,7 @@ namespace UnityEngine.U2D.Common.UTess
             return false;
         }
 
-        internal static bool CalculateEdgeIntersections(NativeArray<int2> edges, int edgeCount, NativeArray<double2> points, int pointCount, ref NativeArray<int2> results, ref NativeArray<double2> intersects, ref int resultCount)
+        internal static bool CalculateEdgeIntersections(Array<int2> edges, int edgeCount, Array<double2> points, int pointCount, ref Array<int2> results, ref Array<double2> intersects, ref int resultCount)
         {
             resultCount = 0;
 
@@ -160,19 +158,18 @@ namespace UnityEngine.U2D.Common.UTess
                 return false;
             }
 
+            var tjc = new IntersectionCompare();
+            tjc.edges = edges;
+            tjc.points = points;
             unsafe
             {
-                var tjc = new IntersectionCompare();
-                tjc.edges = edges;
-                tjc.points = points;
-                ModuleHandle.InsertionSort<int2, IntersectionCompare>(
-                    NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(results), 0, resultCount - 1, tjc);
+                ModuleHandle.InsertionSort<int2, IntersectionCompare>(results.UnsafePtr, 0, resultCount - 1, tjc);
             }
 
             return true;
         }
 
-        internal static bool CalculateTJunctions(NativeArray<int2> edges, int edgeCount, NativeArray<double2> points, int pointCount, NativeArray<int2> results, ref int resultCount)
+        internal static bool CalculateTJunctions(Array<int2> edges, int edgeCount, Array<double2> points, int pointCount, Array<int2> results, ref int resultCount)
         {
             resultCount = 0;
 
@@ -201,7 +198,7 @@ namespace UnityEngine.U2D.Common.UTess
             return true;
         }
 
-        internal static bool CutEdges(ref NativeArray<double2> points, ref int pointCount, ref NativeArray<int2> edges, ref int edgeCount, ref NativeArray<int2> tJunctions, ref int tJunctionCount, NativeArray<int2> intersections, NativeArray<double2> intersects, int intersectionCount)
+        internal static bool CutEdges(ref Array<double2> points, ref int pointCount, ref Array<int2> edges, ref int edgeCount, ref Array<int2> tJunctions, ref int tJunctionCount, Array<int2> intersections, Array<double2> intersects, int intersectionCount)
         {
             for (int i = 0; i < intersectionCount; ++i)
             {
@@ -227,9 +224,7 @@ namespace UnityEngine.U2D.Common.UTess
 
             unsafe
             {
-                ModuleHandle.InsertionSort<int2, TessJunctionCompare>(
-                    NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(tJunctions), 0, tJunctionCount - 1,
-                    new TessJunctionCompare());
+                ModuleHandle.InsertionSort<int2, TessJunctionCompare>( tJunctions.UnsafePtr, 0, tJunctionCount - 1, new TessJunctionCompare());
             }
 
             // Split edges along junctions
@@ -277,7 +272,7 @@ namespace UnityEngine.U2D.Common.UTess
             return true;
         }
 
-        internal static void RemoveDuplicatePoints(ref NativeArray<double2> points, ref int pointCount, ref NativeArray<int> duplicates, ref int duplicateCount, Allocator allocator)
+        internal static void RemoveDuplicatePoints(ref Array<double2> points, ref int pointCount, ref Array<int> duplicates, ref int duplicateCount, Allocator allocator)
         {
             TessLink link = TessLink.CreateLink(pointCount, allocator);
 
@@ -338,28 +333,34 @@ namespace UnityEngine.U2D.Common.UTess
         }
 
         // Validate the Input Points ane Edges.
-        internal static bool Validate(Allocator allocator, NativeArray<float2> inputPoints, int pointCount, NativeArray<int2> inputEdges, int edgeCount, ref NativeArray<float2> outputPoints, ref int outputPointCount, ref NativeArray<int2> outputEdges, ref int outputEdgeCount)
+        internal static bool Validate(Allocator allocator, in NativeArray<float2> inputPoints, int pointCount, in NativeArray<int2> inputEdges, int edgeCount, ref NativeArray<float2> outputPoints, out int outputPointCount, ref NativeArray<int2> outputEdges, out int outputEdgeCount)
         {
-
+            outputPointCount = 0;
+            outputEdgeCount = 0;
+            
             // Outline generated inputs can have differences in the range of 0.00001f.. See TwoLayers.psb sample.
-            // Since PlanarGraph operates on double, scaling up and down does not result in loss of data. 
+            // Since PlanarGraph operates on double, scaling up and down does not result in loss of data.
             var precisionFudge = 10000.0f;
             var protectLoop = edgeCount;
             var requiresFix = true;
             var validGraph = false;
 
             // Processing Arrays.
-            NativeArray<int> duplicates = new NativeArray<int>(ModuleHandle.kMaxEdgeCount, allocator);
-            NativeArray<int2> edges = new NativeArray<int2>(ModuleHandle.kMaxEdgeCount, allocator);
-            NativeArray<int2> tJunctions = new NativeArray<int2>(ModuleHandle.kMaxEdgeCount, allocator);
-            NativeArray<int2> edgeIntersections = new NativeArray<int2>(ModuleHandle.kMaxEdgeCount, allocator);
-            NativeArray<double2> points = new NativeArray<double2>(pointCount * 8, allocator);
-            NativeArray<double2> intersects = new NativeArray<double2>(pointCount * 8, allocator);
+            int startEdgeCount = edgeCount;
+            Array<int> duplicates = new Array<int>(startEdgeCount, ModuleHandle.kMaxEdgeCount, allocator, NativeArrayOptions.UninitializedMemory);
+            Array<int2> edges = new Array<int2>(startEdgeCount, ModuleHandle.kMaxEdgeCount, allocator, NativeArrayOptions.UninitializedMemory);
+            Array<int2> tJunctions = new Array<int2>(startEdgeCount, ModuleHandle.kMaxEdgeCount, allocator, NativeArrayOptions.UninitializedMemory);
+            Array<int2> edgeIntersections = new Array<int2>(startEdgeCount, ModuleHandle.kMaxEdgeCount, allocator, NativeArrayOptions.UninitializedMemory);
+            Array<double2> points = new Array<double2>(pointCount * 2, pointCount * 8, allocator, NativeArrayOptions.UninitializedMemory);
+            Array<double2> intersects = new Array<double2>(pointCount * 2, pointCount * 8, allocator, NativeArrayOptions.UninitializedMemory);
 
             // Initialize.
             for (int i = 0; i < pointCount; ++i)
                 points[i] = inputPoints[i] * precisionFudge;
-            ModuleHandle.Copy(inputEdges, edges, edgeCount);
+            unsafe
+            {
+                UnsafeUtility.MemCpy(edges.UnsafeReadOnlyPtr, inputEdges.GetUnsafePtr(), edgeCount * sizeof(int2));
+            }
 
             // Pre-clear duplicates, otherwise the following will simply fail.
             RemoveDuplicateEdges(ref edges, ref edgeCount, duplicates, 0);
@@ -394,10 +395,13 @@ namespace UnityEngine.U2D.Common.UTess
 
             if (validGraph)
             {
-                // Finalize Output. 
+                // Finalize Output.
                 outputEdgeCount = edgeCount;
                 outputPointCount = pointCount;
-                ModuleHandle.Copy(edges, outputEdges, edgeCount);
+                unsafe
+                {
+                    UnsafeUtility.MemCpy(outputEdges.GetUnsafePtr(), edges.UnsafeReadOnlyPtr, edgeCount * sizeof(int2));
+                }
                 for (int i = 0; i < pointCount; ++i)
                     outputPoints[i] = new float2((float)(points[i].x / precisionFudge), (float)(points[i].y / precisionFudge));
             }

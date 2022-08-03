@@ -85,8 +85,8 @@ namespace UnityEngine.U2D.Common.UTess
 
     unsafe struct IntersectionCompare : IComparer<int2>
     {
-        public NativeArray<double2> points;
-        public NativeArray<int2> edges;
+        public Array<double2> points;
+        public Array<int2> edges;
 
         public fixed double xvasort[4];
         public fixed double xvbsort[4];
@@ -700,7 +700,7 @@ namespace UnityEngine.U2D.Common.UTess
             return ret;
         }        
         
-        public static float4 Tessellate(Allocator allocator, NativeArray<float2> points, NativeArray<int2> edges, ref NativeArray<float2> outVertices, ref int outVertexCount, ref NativeArray<int> outIndices, ref int outIndexCount, ref NativeArray<int2> outEdges, ref int outEdgeCount)
+        public static float4 Tessellate(Allocator allocator, in NativeArray<float2> points, in NativeArray<int2> edges, ref NativeArray<float2> outVertices, out int outVertexCount, ref NativeArray<int> outIndices, out int outIndexCount, ref NativeArray<int2> outEdges, out int outEdgeCount)
         {
             // Inputs are garbage, just early out.
             float4 ret = float4.zero;
@@ -717,7 +717,7 @@ namespace UnityEngine.U2D.Common.UTess
             // Valid Edges and Paths, correct the Planar Graph. If invalid create a simple convex hull rect.
             if (0 != edges.Length)
             {                
-                validGraph = PlanarGraph.Validate(allocator, points, points.Length, edges, edges.Length, ref pgPoints,ref pgPointCount, ref pgEdges, ref pgEdgeCount);
+                validGraph = PlanarGraph.Validate(allocator, in points, points.Length, in edges, edges.Length, ref pgPoints,out pgPointCount, ref pgEdges, out pgEdgeCount);
             }            
             
             // Fallbacks are now handled by the Higher level packages. Enable if UTess needs to handle it.
