@@ -117,5 +117,10 @@ namespace UnityEditor.U2D.Common
         {
             return ProjectBrowser.kAssetCreationInstanceID_ForNonExistingAssets;
         }
+        
+        public static string TextureImporterDefaultPlatformName()
+        {
+            return TextureImporter.defaultPlatformName;
+        }
     }
 }

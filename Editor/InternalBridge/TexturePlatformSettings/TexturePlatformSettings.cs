@@ -1,10 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor;
 using UnityEditor.Build;
 using System;
-using UnityEditor.Modules;
 
 namespace UnityEditor.U2D.Common
 {
@@ -22,6 +19,8 @@ namespace UnityEditor.U2D.Common
         bool IsSourceTextureHDR(int v);
         void SetPlatformTextureSettings(int i, TextureImporterPlatformSettings platformSettings);
         void GetImporterSettings(int i, UnityEditor.TextureImporterSettings settings);
+        string GetBuildTargetName(SerializedProperty sp);
+        SerializedProperty platformSettingsArray { get; }
     }
 
     internal class TexturePlatformSettings : BaseTextureImportPlatformSettings
@@ -41,9 +40,40 @@ namespace UnityEditor.U2D.Common
             m_DataProvider = inspector;
             DefaultImportSettings = defaultPlatform;
             Init();
+            CacheSerializedProperties(inspector.platformSettingsArray);
         }
 
+        public void CacheSerializedProperties(SerializedProperty platformSettingsArray)
+        {
+            if (model.platformTextureSettingsProp != null && model.platformTextureSettingsProp.isValid && m_DataProvider.GetBuildTargetName(model.platformTextureSettingsProp) == model.platformTextureSettings.name)
+                return;
+            if (platformSettingsArray.arraySize == 0)
+            {
+                model.platformTextureSettingsProp = (SerializedProperty)null;
+                throw new UnityException("Cannot find any Platform Settings, including the Default Platform. This is incorrect, did initialization fail?");
+            }
 
+            for (int index = 0; index < platformSettingsArray.arraySize; ++index)
+            {
+                SerializedProperty arrayElementAtIndex = platformSettingsArray.GetArrayElementAtIndex(index);
+                if (m_DataProvider.GetBuildTargetName(arrayElementAtIndex) == model.platformTextureSettings.name)
+                {
+                    model.platformTextureSettingsProp = arrayElementAtIndex;
+                    break;
+                }
+            }
+
+            model.alphaSplitProperty = model.platformTextureSettingsProp != null ? model.platformTextureSettingsProp.FindPropertyRelative("m_AllowsAlphaSplitting") : throw new UnityException(string.Format("Could not find the requested Platform Texture Settings {0}. This is incorrect, did initialization fail?", model.platformTextureSettings.name));
+            model.androidETC2FallbackOverrideProperty = model.platformTextureSettingsProp.FindPropertyRelative("m_AndroidETC2FallbackOverride");
+            model.compressionQualityProperty = model.platformTextureSettingsProp.FindPropertyRelative("m_CompressionQuality");
+            model.crunchedCompressionProperty = model.platformTextureSettingsProp.FindPropertyRelative("m_CrunchedCompression");
+            model.maxTextureSizeProperty = model.platformTextureSettingsProp.FindPropertyRelative("m_MaxTextureSize");
+            model.overriddenProperty = model.platformTextureSettingsProp.FindPropertyRelative("m_Overridden");
+            model.resizeAlgorithmProperty = model.platformTextureSettingsProp.FindPropertyRelative("m_ResizeAlgorithm");
+            model.textureCompressionProperty = model.platformTextureSettingsProp.FindPropertyRelative("m_TextureCompression");
+            model.textureFormatProperty = model.platformTextureSettingsProp.FindPropertyRelative("m_TextureFormat");
+        }
+        
         public override bool textureTypeHasMultipleDifferentValues
         {
             get { return m_DataProvider.textureTypeHasMultipleDifferentValues; }
@@ -99,6 +129,24 @@ namespace UnityEditor.U2D.Common
         public override void SetPlatformTextureSettings(int i, TextureImporterPlatformSettings platformSettings)
         {
             platformSettings.name = GetFixedPlatformName(platformSettings.name);
+            if (!model.overriddenIsDifferent)
+                model.overriddenProperty.boolValue = model.platformTextureSettings.overridden;
+            if (!model.textureFormatIsDifferent)
+                model.textureFormatProperty.intValue = (int)model.platformTextureSettings.format;
+            if (!model.maxTextureSizeIsDifferent)
+                model.maxTextureSizeProperty.intValue = model.platformTextureSettings.maxTextureSize;
+            if (!model.resizeAlgorithmIsDifferent)
+                model.resizeAlgorithmProperty.intValue = (int)model.platformTextureSettings.resizeAlgorithm;
+            if (!model.textureCompressionIsDifferent)
+                model.textureCompressionProperty.intValue = (int)model.platformTextureSettings.textureCompression;
+            if (!model.compressionQualityIsDifferent)
+                model.compressionQualityProperty.intValue = model.platformTextureSettings.compressionQuality;
+            if (!model.crunchedCompressionIsDifferent)
+                model.crunchedCompressionProperty.boolValue = model.platformTextureSettings.crunchedCompression;
+            if (!model.allowsAlphaSplitIsDifferent)
+                model.alphaSplitProperty.boolValue = model.platformTextureSettings.allowsAlphaSplitting;
+            if (!model.androidETC2FallbackOverrideIsDifferent)
+                model.androidETC2FallbackOverrideProperty.intValue = (int)model.platformTextureSettings.androidETC2FallbackOverride;
             m_DataProvider.SetPlatformTextureSettings(i, platformSettings);
         }
 
@@ -117,19 +165,43 @@ namespace UnityEditor.U2D.Common
         List<TexturePlatformSettings> m_PlatformSettings;
         ITexturePlatformSettingsDataProvider m_DataProvider;
 
+        internal static List<TextureImporterPlatformSettings> PlatformSettingsNeeded(ITexturePlatformSettingsDataProvider dataProvider)
+        {
+            BuildPlatform[] validPlatforms = BaseTextureImportPlatformSettings.GetBuildPlayerValidPlatforms();
+
+            var platformSettings = new List<TextureImporterPlatformSettings>();
+            platformSettings.Add(new TextureImporterPlatformSettings()
+            {
+                name = TextureImporterInspector.s_DefaultPlatformName
+            });
+
+            foreach (BuildPlatform bp in validPlatforms)
+            {
+                platformSettings.Add(new TextureImporterPlatformSettings
+                {
+                    name = bp.name,
+                    overridden = false
+                });
+            }
+
+            return platformSettings;
+        }
+        
         public TexturePlatformSettingsHelper(ITexturePlatformSettingsDataProvider dataProvider)
         {
             m_DataProvider = dataProvider;
             BuildPlatform[] validPlatforms = BaseTextureImportPlatformSettings.GetBuildPlayerValidPlatforms();
 
             m_PlatformSettings = new List<TexturePlatformSettings>();
-            m_PlatformSettings.Add(new TexturePlatformSettings(TextureImporterInspector.s_DefaultPlatformName, BuildTarget.StandaloneWindows, dataProvider, DefaulTextureImportPlatformSettings));
+            m_PlatformSettings.Add(new TexturePlatformSettings(TextureImporterInspector.s_DefaultPlatformName, BuildTarget.StandaloneWindows, dataProvider, DefaultTextureImportPlatformSettings));
 
             foreach (BuildPlatform bp in validPlatforms)
-                m_PlatformSettings.Add(new TexturePlatformSettings(bp.name, bp.defaultTarget, dataProvider, DefaulTextureImportPlatformSettings));
+            {
+                m_PlatformSettings.Add(new TexturePlatformSettings(bp.name, bp.defaultTarget, dataProvider, DefaultTextureImportPlatformSettings));
+            }
         }
 
-        BaseTextureImportPlatformSettings DefaulTextureImportPlatformSettings()
+        BaseTextureImportPlatformSettings DefaultTextureImportPlatformSettings()
         {
             return m_PlatformSettings[0];
         }
@@ -153,8 +225,17 @@ namespace UnityEditor.U2D.Common
 
         public void ShowPlatformSpecificSettings()
         {
-            BaseTextureImportPlatformSettings.ShowPlatformSpecificSettings(m_PlatformSettings.ConvertAll<BaseTextureImportPlatformSettings>(x => x as BaseTextureImportPlatformSettings));
-            SyncPlatformSettings();
+            using (var changed = new EditorGUI.ChangeCheckScope())
+            {
+                BaseTextureImportPlatformSettings.InitPlatformSettings(m_PlatformSettings.ConvertAll<BaseTextureImportPlatformSettings>(x => x as BaseTextureImportPlatformSettings));
+                m_PlatformSettings.ForEach(settings => settings.CacheSerializedProperties(m_DataProvider.platformSettingsArray));
+                BaseTextureImportPlatformSettings.ShowPlatformSpecificSettings(m_PlatformSettings.ConvertAll<BaseTextureImportPlatformSettings>(x => x as BaseTextureImportPlatformSettings));
+                // Doing it this way is slow, but it ensure Presets get updated correctly whenever the UI is being changed.
+                if (changed.changed)
+                {
+                    BaseTextureImportPlatformSettings.ApplyPlatformSettings(m_PlatformSettings.ConvertAll<BaseTextureImportPlatformSettings>(x => x as BaseTextureImportPlatformSettings));
+                }
+            }
         }
 
         public bool HasModified()

@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.2.1] - 2022-08-30
+### Fixed
+- Update TexturePlatformSettings implementation.
+
 ## [4.2.0] - 2022-03-12
 ### Changed
 - Updated minimum Unity release version required for the package to 2020.3.26f1.
