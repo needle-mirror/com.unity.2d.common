@@ -2,7 +2,9 @@
     "name": "Unity.2D.Common.Editor",
     "references": [
         "Unity.2D.Common.Runtime",
-        "Unity.2D.Sprite.Editor"
+        "Unity.2D.Sprite.Editor",
+        "Unity.Mathematics",
+        "Unity.Burst"
     ],
     "includePlatforms": [
         "Editor"

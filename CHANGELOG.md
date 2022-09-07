@@ -1,4 +1,7 @@
 # Changelog
+## [6.0.5] - 2022-09-07
+### Changed
+- Added support for different sized texture inputs in ImagePacker. 
 
 ## [6.0.4] - 2022-06-28
 ### Changed

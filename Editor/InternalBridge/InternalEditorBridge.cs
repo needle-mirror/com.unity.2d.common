@@ -133,5 +133,10 @@ namespace UnityEditor.U2D.Common
         {
             return sc.cameraViewVisualElement;
         }
+        
+        public static string TextureImporterDefaultPlatformName()
+        {
+            return TextureImporter.defaultPlatformName;
+        }
     }
 }
