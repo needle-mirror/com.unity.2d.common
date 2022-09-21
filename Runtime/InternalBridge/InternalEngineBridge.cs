@@ -16,9 +16,19 @@ namespace UnityEngine.U2D.Common
             spriteRenderer.SetDeformableBuffer(src);
         }
 
+        public static void SetBoneTransforms(SpriteRenderer spriteRenderer, NativeArray<Matrix4x4> src)
+        {
+            spriteRenderer.SetBoneTransforms(src);
+        }
+
         public static bool IsUsingDeformableBuffer(SpriteRenderer spriteRenderer, IntPtr buffer)
         {
             return spriteRenderer.IsUsingDeformableBuffer(buffer);
+        }
+
+        public static void SetupMaterialProperties(SpriteRenderer spriteRenderer)
+        {
+            SpriteRendererDataAccessExtensions.SetupMaterialProperties(spriteRenderer);
         }
 
         public static Vector2 GUIUnclip(Vector2 v)
@@ -41,10 +51,19 @@ namespace UnityEngine.U2D.Common
             return GUIClip.visibleRect;
         }
 
+        public static bool IsGPUSkinningEnabled()
+        {
+            return SpriteRendererDataAccessExtensions.IsGPUSkinningEnabled();
+        }
 
         public static void SetBatchDeformableBufferAndLocalAABBArray(SpriteRenderer[] spriteRenderers, NativeArray<IntPtr> buffers, NativeArray<int> bufferSizes, NativeArray<Bounds> bounds)
         {
             SpriteRendererDataAccessExtensions.SetBatchDeformableBufferAndLocalAABBArray(spriteRenderers, buffers, bufferSizes, bounds);
+        }
+
+        public static void SetBatchBoneTransformsAABBArray(SpriteRenderer[] spriteRenderers, NativeArray<IntPtr> buffers, NativeArray<int> bufferSizes, NativeArray<Bounds> bounds)
+        {
+            SpriteRendererDataAccessExtensions.SetBoneTransformsArray(spriteRenderers, buffers, bufferSizes, bounds);
         }
 
 #if UNITY_EDITOR

@@ -1,12 +1,15 @@
 //#define PACKING_DEBUG
 
 using System;
+using Unity.Burst;
+using Unity.Mathematics;
 using UnityEngine;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
 namespace UnityEditor.U2D.Common
 {
+    [BurstCompile]
     internal static class ImagePacker
     {
         /// <summary>
@@ -47,10 +50,10 @@ namespace UnityEditor.U2D.Common
         /// <param name="spriteSizeExpand">Pack sprite expand size</param>
         /// <param name="outPackedBuffer">Packed image buffer</param>
         /// <param name="outPackedBufferWidth">Packed image buffer's width</param>
-        /// <param name="outPackedBufferHeight">Packed iamge buffer's height</param>
+        /// <param name="outPackedBufferHeight">Packed image buffer's height</param>
         /// <param name="outPackedRect">Location of each image buffers in the packed buffer</param>
         /// <param name="outUVTransform">Translation data from image original buffer to packed buffer</param>
-        public static void Pack(NativeArray<Color32>[] buffers, int width, int height, int padding, uint spriteSizeExpand, out NativeArray<Color32> outPackedBuffer, out int outPackedBufferWidth, out int outPackedBufferHeight, out RectInt[] outPackedRect, out Vector2Int[] outUVTransform)
+        public static void Pack(NativeArray<Color32>[] buffers, int[] width, int[] height, int padding, uint spriteSizeExpand, out NativeArray<Color32> outPackedBuffer, out int outPackedBufferWidth, out int outPackedBufferHeight, out RectInt[] outPackedRect, out Vector2Int[] outUVTransform)
         {
             UnityEngine.Profiling.Profiler.BeginSample("Pack");
             // Determine the area that contains data in the buffer
@@ -59,7 +62,7 @@ namespace UnityEditor.U2D.Common
             {
                 var tightRects = FindTightRectJob.Execute(buffers, width, height);
                 var tightRectArea = new RectInt[tightRects.Length];
-                for (int i = 0; i < tightRects.Length; ++i)
+                for (var i = 0; i < tightRects.Length; ++i)
                 {
                     var t = tightRects[i];
                     t.width = tightRects[i].width + (int)spriteSizeExpand;
@@ -74,7 +77,7 @@ namespace UnityEditor.U2D.Common
                     throw new ArgumentException("Unable to create pack texture. Image size is too big to pack.");
                 }
                 outUVTransform = new Vector2Int[tightRectArea.Length];
-                for (int i = 0; i < outUVTransform.Length; ++i)
+                for (var i = 0; i < outUVTransform.Length; ++i)
                 {
                     outUVTransform[i] = new Vector2Int(outPackedRect[i].x - tightRects[i].x, outPackedRect[i].y - tightRects[i].y);
                 }
@@ -131,29 +134,16 @@ namespace UnityEditor.U2D.Common
             }
             return root;
         }
-
-        public static unsafe void Blit(NativeArray<Color32> buffer, RectInt[] blitToArea, int bufferbytesPerRow, NativeArray<Color32>[] originalBuffer, RectInt[] blitFromArea, int bytesPerRow, int padding)
+        
+        public static void Blit(NativeArray<Color32> buffer, RectInt[] blitToArea, int bufferBytesPerRow, NativeArray<Color32>[] originalBuffer, RectInt[] blitFromArea, int[] bytesPerRow, int padding)
         {
             UnityEngine.Profiling.Profiler.BeginSample("Blit");
-
-            var c = (Color32*)buffer.GetUnsafePtr();
-            for (int bufferIndex = 0; bufferIndex < blitToArea.Length && bufferIndex < originalBuffer.Length && bufferIndex < blitFromArea.Length; ++bufferIndex)
+            
+            for (var bufferIndex = 0; bufferIndex < blitToArea.Length && bufferIndex < originalBuffer.Length && bufferIndex < blitFromArea.Length; ++bufferIndex)
             {
-                var b = (Color32*)originalBuffer[bufferIndex].GetUnsafeReadOnlyPtr();
-                var rectFrom = blitFromArea[bufferIndex];
-                var rectTo = blitToArea[bufferIndex];
-                int toXStart = (int)(rectTo.width * 0.5f - rectFrom.width * 0.5f);
-                int toYStart = (int)(rectTo.height * 0.5f - rectFrom.height * 0.5f);
-                toXStart = toXStart <= 0 ? rectTo.x : toXStart + rectTo.x;
-                toYStart = toYStart <= 0 ? rectTo.y : toYStart + rectTo.y;
-                for (int i = 0; i < rectFrom.height && i < rectTo.height; ++i)
-                {
-                    for (int j = 0; j < rectFrom.width && j < rectTo.width; ++j)
-                    {
-                        Color32 cc = b[(rectFrom.y + i) * bytesPerRow + rectFrom.x + j];
-                        c[((toYStart + i) * bufferbytesPerRow) + toXStart + j] = cc;
-                    }
-                }
+                var fromArea = new int4(blitFromArea[bufferIndex].x, blitFromArea[bufferIndex].y, blitFromArea[bufferIndex].width, blitFromArea[bufferIndex].height);
+                var toArea = new int4(blitToArea[bufferIndex].x, blitToArea[bufferIndex].y, blitToArea[bufferIndex].width, blitToArea[bufferIndex].height);
+                BurstedBlit(originalBuffer[bufferIndex], in fromArea, in toArea, bytesPerRow[bufferIndex], bufferBytesPerRow, ref buffer);
             }
 
 #if PACKING_DEBUG
@@ -181,6 +171,26 @@ namespace UnityEditor.U2D.Common
             }
 #endif
             UnityEngine.Profiling.Profiler.EndSample();
+        }
+
+        [BurstCompile]
+        static unsafe void BurstedBlit(in NativeArray<Color32> originalBuffer, in int4 rectFrom, in int4 rectTo, int bytesPerRow, int bufferBytesPerRow, ref NativeArray<Color32> buffer)
+        {
+            var c = (Color32*)buffer.GetUnsafePtr();
+            
+            var b = (Color32*)originalBuffer.GetUnsafeReadOnlyPtr();
+            var toXStart = (int)(rectTo.z * 0.5f - rectFrom.z * 0.5f);
+            var toYStart = (int)(rectTo.w * 0.5f - rectFrom.w * 0.5f);
+            toXStart = toXStart <= 0 ? rectTo.x : toXStart + rectTo.x;
+            toYStart = toYStart <= 0 ? rectTo.y : toYStart + rectTo.y;
+            for (var i = 0; i < rectFrom.w && i < rectTo.w; ++i)
+            {
+                for (var j = 0; j < rectFrom.z && j < rectTo.z; ++j)
+                {
+                    var cc = b[(rectFrom.y + i) * bytesPerRow + rectFrom.x + j];
+                    c[((toYStart + i) * bufferBytesPerRow) + toXStart + j] = cc;
+                }
+            }
         }
 
         internal static ulong NextPowerOfTwo(ulong v)

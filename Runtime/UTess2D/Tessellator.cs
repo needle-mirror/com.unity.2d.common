@@ -240,7 +240,7 @@ namespace UnityEngine.U2D.Common.UTess
         {
             m_StarCount = m_CellCount * 3;
             m_Stars = new NativeArray<UStar>(m_StarCount, m_Allocator);
-            m_SPArray = new NativeArray<int>(m_StarCount * m_StarCount, m_Allocator);
+            m_SPArray = new NativeArray<int>(m_StarCount * m_StarCount, m_Allocator, NativeArrayOptions.UninitializedMemory);
 
             var UEdgeCount = 0;
             var UEdges = new NativeArray<int2>(m_StarCount, m_Allocator);
@@ -376,7 +376,7 @@ namespace UnityEngine.U2D.Common.UTess
             AddTriangle(j, a, b);
         }
 
-        bool Flip(NativeArray<float2> points, ref NativeArray<int> stack, ref int stackCount, int a, int b, int x)
+        bool Flip(NativeArray<float2> points, ref Array<int> stack, ref int stackCount, int a, int b, int x)
         {
             int y = OppositeOf(a, b);
 
@@ -411,9 +411,9 @@ namespace UnityEngine.U2D.Common.UTess
             return true;
         }
 
-        NativeArray<int3> GetCells(ref int count)
+        Array<int3> GetCells(ref int count)
         {
-            NativeArray<int3> cellsOut = new NativeArray<int3>(m_NumPoints * (m_NumPoints + 1), m_Allocator);
+            var cellsOut = new Array<int3>(m_NumPoints * 4, m_NumPoints * (m_NumPoints + 1), m_Allocator, NativeArrayOptions.UninitializedMemory);
             count = 0;
             for (int i = 0, n = m_Stars.Length; i < n; ++i)
             {
@@ -443,7 +443,7 @@ namespace UnityEngine.U2D.Common.UTess
             if (0 == m_CellCount)
                 return false;
 
-            NativeArray<int> stack = new NativeArray<int>(m_NumPoints * (m_NumPoints + 1), m_Allocator);
+            var stack = new Array<int>(m_NumPoints * 4, m_NumPoints * (m_NumPoints + 1), m_Allocator, NativeArrayOptions.UninitializedMemory);
             int stackCount = 0;
             var valid = true;
 
@@ -551,7 +551,7 @@ namespace UnityEngine.U2D.Common.UTess
             }
         }
 
-        int FindNeighbor(NativeArray<int3> cells, int count, int a, int b, int c)
+        int FindNeighbor(Array<int3> cells, int count, int a, int b, int c)
         {
             int x = a, y = b, z = c;
             if (b < c)
@@ -582,7 +582,7 @@ namespace UnityEngine.U2D.Common.UTess
             return ModuleHandle.GetEqual(cells, count, key, new TestCellE());
         }
 
-        NativeArray<int3> Constrain(ref int count)
+        Array<int3> Constrain(ref int count)
         {
             var cells = GetCells(ref count);
             int nc = count;
@@ -612,7 +612,7 @@ namespace UnityEngine.U2D.Common.UTess
             unsafe
             {
                 ModuleHandle.InsertionSort<int3, TessCellCompare>(
-                    NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(cells), 0, m_CellCount - 1,
+                    cells.UnsafePtr, 0, m_CellCount - 1,
                     new TessCellCompare());
             }
 
@@ -698,9 +698,8 @@ namespace UnityEngine.U2D.Common.UTess
         internal NativeArray<int3> RemoveExterior(ref int cellCount)
         {
             int constrainedCount = 0;
-            NativeArray<int3> constrained = Constrain(ref constrainedCount);
-
-            NativeArray<int3> cellsOut = new NativeArray<int3>(constrainedCount, m_Allocator);
+            var constrained = Constrain(ref constrainedCount);
+            var cellsOut = new NativeArray<int3>(constrainedCount, m_Allocator);
             cellCount = 0;
             for (int i = 0; i < constrainedCount; ++i)
             {
@@ -717,9 +716,8 @@ namespace UnityEngine.U2D.Common.UTess
         internal NativeArray<int3> RemoveInterior(int cellCount)
         {
             int constrainedCount = 0;
-            NativeArray<int3> constrained = Constrain(ref constrainedCount);
-
-            NativeArray<int3> cellsOut = new NativeArray<int3>(constrainedCount, m_Allocator);
+            var constrained = Constrain(ref constrainedCount);
+            var cellsOut = new NativeArray<int3>(constrainedCount, m_Allocator);
             cellCount = 0;
             for (int i = 0; i < constrainedCount; ++i)
             {
