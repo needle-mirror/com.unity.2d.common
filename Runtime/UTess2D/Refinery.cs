@@ -54,26 +54,9 @@ namespace UnityEngine.U2D.Common.UTess
             pgPointCount++;
         }
 
-        static int FindSegment(NativeArray<float2> pgPoints, int pgPointCount, NativeArray<int2> pgEdges, int pgEdgeCount, UEncroachingSegment es)
-        {
-            for (int i = es.index; i < pgEdgeCount; ++i)
-            {
-                var edge = pgEdges[i];
-                var edgeA = pgPoints[edge.x];
-                var edgeB = pgPoints[edge.y];
-                if (math.any(edgeA - es.a) || math.any(edgeB - es.b))
-                    continue;
-                return i;
-            }
-            return -1;
-        }
-
         static void SplitSegments(ref NativeArray<float2> pgPoints, ref int pgPointCount, ref NativeArray<int2> pgEdges, ref int pgEdgeCount, UEncroachingSegment es)
         {
-            var sid = FindSegment(pgPoints, pgPointCount, pgEdges, pgEdgeCount, es);
-            if (sid == -1)
-                return;
-
+            var sid = es.index;
             var edge = pgEdges[sid];
             var edgeA = pgPoints[edge.x];
             var edgeB = pgPoints[edge.y];
@@ -114,7 +97,7 @@ namespace UnityEngine.U2D.Common.UTess
             // Temporary Stuffs.
             int triangleCount = 0, invalidTriangle = -1, inputPointCount = pgPointCount;
             var encroach = new Array<UEncroachingSegment>(inputPointCount, ModuleHandle.kMaxEdgeCount, allocator, NativeArrayOptions.UninitializedMemory);
-            var triangles = new NativeArray<UTriangle>(ModuleHandle.kMaxTriangleCount, allocator);
+            var triangles = new Array<UTriangle>(inputPointCount * 4, ModuleHandle.kMaxTriangleCount, allocator, NativeArrayOptions.UninitializedMemory);
             ModuleHandle.BuildTriangles(vertices, vertexCount, indices, indexCount, ref triangles, ref triangleCount, ref maxArea, ref avgArea, ref minArea);
             factorArea = factorArea != 0 ? math.clamp(factorArea, kMinAreaFactor, kMaxAreaFactor) : factorArea;
             var criArea = maxArea * factorArea;

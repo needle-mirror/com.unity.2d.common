@@ -1,9 +1,14 @@
 # Changelog
 
+## [8.0.1] - 2022-10-11
+### Changed
+- Refactored the internal triangulation and tessellation APIs.
+
 ## [8.0.0] - 2022-08-03
 ### Changed
 - Refactored internal triangulation and tessellation APIs.
 - Update com.unity.burst dependency version to 1.7.3 to support latest PS4 SDK.
+- Added support for different sized texture inputs in ImagePacker. 
 
 ## [8.0.0-pre.2] - 2022-05-31
 ### Added

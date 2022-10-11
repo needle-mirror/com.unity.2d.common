@@ -9,12 +9,20 @@ using Unity.Burst;
 namespace UnityEngine.U2D.Common.UTess
 {
 
+    /// <summary>
+    /// Array. Used within UTess and constrained to
+    /// 1. Auto-resizes upto the Max count with a smaller initial count.
+    /// 2. Only be used within the created thread. Read 1.
+    /// 3. Read/Write access are all fast-paths.
+    /// 4. Mostly used with Temp Alloc within UTess ontext.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [StructLayout(LayoutKind.Sequential)]
     [DebuggerDisplay("Length = {Length}")]
     [DebuggerTypeProxy(typeof(ArrayDebugView<>))]
     internal unsafe struct Array<T> : IDisposable where T : struct
     {
-        NativeArray<T> m_Array;
+        internal NativeArray<T> m_Array;
         internal int m_MaxSize;
         internal Allocator m_AllocLabel;
         internal NativeArrayOptions m_Options;
@@ -26,6 +34,7 @@ namespace UnityEngine.U2D.Common.UTess
             m_Options = options;
             m_MaxSize = maxSize;
         }
+
 
         private void ResizeIfRequired(int index)
         {

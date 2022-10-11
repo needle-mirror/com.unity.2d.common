@@ -143,7 +143,7 @@ namespace UnityEngine.U2D.Common.UTess
             return true;
         }
 
-        
+
         // Perform Voronoi based Smoothing. Does not add/remove points but merely relocates internal vertices so they are uniform distributed.
         internal static bool Condition(Allocator allocator, ref NativeArray<float2> pgPoints, int pgPointCount, NativeArray<int2> pgEdges, int pgEdgeCount, ref NativeArray<float2> vertices, ref int vertexCount, ref NativeArray<int> indices, ref int indexCount)
         {
