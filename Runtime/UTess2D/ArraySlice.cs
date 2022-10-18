@@ -43,6 +43,27 @@ namespace UnityEngine.U2D.Common.UTess
             m_Length = length;
         }
 
+        public ArraySlice(Array<T> array, int start, int length)
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (start < 0)
+                throw new ArgumentOutOfRangeException(nameof(start), $"Slice start {start} < 0.");
+            if (length < 0)
+                throw new ArgumentOutOfRangeException(nameof(length), $"Slice length {length} < 0.");
+            if (start + length > array.Length)
+                throw new ArgumentException(
+                    $"Slice start + length ({start + length}) range must be <= array.Length ({array.Length})");
+            m_MinIndex = 0;
+            m_MaxIndex = length - 1;
+            m_Safety = Unity.Collections.LowLevel.Unsafe.NativeArrayUnsafeUtility.GetAtomicSafetyHandle(array.m_Array);
+#endif
+
+            m_Stride = UnsafeUtility.SizeOf<T>();
+            var ptr = (byte*)array.UnsafePtr + m_Stride * start;
+            m_Buffer = ptr;
+            m_Length = length;
+        }
+
         public bool Equals(ArraySlice<T> other)
         {
             return m_Buffer == other.m_Buffer && m_Stride == other.m_Stride && m_Length == other.m_Length;

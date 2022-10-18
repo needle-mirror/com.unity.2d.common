@@ -1,4 +1,9 @@
 # Changelog
+
+## [7.0.3] - 2022-10-18
+### Changed
+- Refactored the internal triangulation and tessellation APIs.
+
 ## [7.0.2] - 2022-09-07
 ### Changed
 - Added support for different sized texture inputs in ImagePacker. 

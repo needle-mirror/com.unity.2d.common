@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Profiling;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Collections.LowLevel.Unsafe;
@@ -13,7 +14,7 @@ namespace UnityEngine.U2D.Common.UTess
         // For Processing.
         NativeArray<int2> m_Edges;
         NativeArray<UStar> m_Stars;
-        NativeArray<int3> m_Cells;
+        Array<int3> m_Cells;
         int m_CellCount;
 
         // For Storage.
@@ -144,7 +145,7 @@ namespace UnityEngine.U2D.Common.UTess
 
                 hull.iucount = m + 1;
                 if (hull.iucount > hull.iuarray.Length)
-                    return false;                
+                    return false;
                 hull.iuarray[m] = idx;
 
                 hulls[i] = hull;
@@ -178,7 +179,7 @@ namespace UnityEngine.U2D.Common.UTess
             int index = ModuleHandle.GetLower(hulls, hullCount, evt, new TestHullEventLe());
             if (index < 0)
                 return false;
-            
+
             UHull hull = hulls[index];
 
             UHull newHull;
@@ -239,7 +240,7 @@ namespace UnityEngine.U2D.Common.UTess
         {
             m_StarCount = m_CellCount * 3;
             m_Stars = new NativeArray<UStar>(m_StarCount, m_Allocator);
-            m_SPArray = new NativeArray<int>(m_StarCount * m_StarCount, m_Allocator);
+            m_SPArray = new NativeArray<int>(m_StarCount * m_StarCount, m_Allocator, NativeArrayOptions.UninitializedMemory);
 
             var UEdgeCount = 0;
             var UEdges = new NativeArray<int2>(m_StarCount, m_Allocator);
@@ -375,7 +376,7 @@ namespace UnityEngine.U2D.Common.UTess
             AddTriangle(j, a, b);
         }
 
-        bool Flip(NativeArray<float2> points, ref NativeArray<int> stack, ref int stackCount, int a, int b, int x)
+        bool Flip(NativeArray<float2> points, ref Array<int> stack, ref int stackCount, int a, int b, int x)
         {
             int y = OppositeOf(a, b);
 
@@ -410,9 +411,9 @@ namespace UnityEngine.U2D.Common.UTess
             return true;
         }
 
-        NativeArray<int3> GetCells(ref int count)
+        Array<int3> GetCells(ref int count)
         {
-            NativeArray<int3> cellsOut = new NativeArray<int3>(m_NumPoints * (m_NumPoints + 1), m_Allocator);
+            var cellsOut = new Array<int3>(m_NumPoints * 4, m_NumPoints * (m_NumPoints + 1), m_Allocator, NativeArrayOptions.UninitializedMemory);
             count = 0;
             for (int i = 0, n = m_Stars.Length; i < n; ++i)
             {
@@ -438,7 +439,11 @@ namespace UnityEngine.U2D.Common.UTess
         internal bool ApplyDelaunay(NativeArray<float2> points, NativeArray<int2> edges)
         {
 
-            NativeArray<int> stack = new NativeArray<int>(m_NumPoints * (m_NumPoints + 1), m_Allocator);
+            // Early out if cannot find any valid cells.
+            if (0 == m_CellCount)
+                return false;
+
+            var stack = new Array<int>(m_NumPoints * 4, m_NumPoints * (m_NumPoints + 1), m_Allocator, NativeArrayOptions.UninitializedMemory);
             int stackCount = 0;
             var valid = true;
 
@@ -546,7 +551,7 @@ namespace UnityEngine.U2D.Common.UTess
             }
         }
 
-        int FindNeighbor(NativeArray<int3> cells, int count, int a, int b, int c)
+        int FindNeighbor(Array<int3> cells, int count, int a, int b, int c)
         {
             int x = a, y = b, z = c;
             if (b < c)
@@ -577,7 +582,7 @@ namespace UnityEngine.U2D.Common.UTess
             return ModuleHandle.GetEqual(cells, count, key, new TestCellE());
         }
 
-        NativeArray<int3> Constrain(ref int count)
+        Array<int3> Constrain(ref int count)
         {
             var cells = GetCells(ref count);
             int nc = count;
@@ -607,7 +612,7 @@ namespace UnityEngine.U2D.Common.UTess
             unsafe
             {
                 ModuleHandle.InsertionSort<int3, TessCellCompare>(
-                    NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(cells), 0, m_CellCount - 1,
+                    cells.UnsafePtr, 0, m_CellCount - 1,
                     new TessCellCompare());
             }
 
@@ -693,9 +698,8 @@ namespace UnityEngine.U2D.Common.UTess
         internal NativeArray<int3> RemoveExterior(ref int cellCount)
         {
             int constrainedCount = 0;
-            NativeArray<int3> constrained = Constrain(ref constrainedCount);
-
-            NativeArray<int3> cellsOut = new NativeArray<int3>(constrainedCount, m_Allocator);
+            var constrained = Constrain(ref constrainedCount);
+            var cellsOut = new NativeArray<int3>(constrainedCount, m_Allocator);
             cellCount = 0;
             for (int i = 0; i < constrainedCount; ++i)
             {
@@ -712,9 +716,8 @@ namespace UnityEngine.U2D.Common.UTess
         internal NativeArray<int3> RemoveInterior(int cellCount)
         {
             int constrainedCount = 0;
-            NativeArray<int3> constrained = Constrain(ref constrainedCount);
-
-            NativeArray<int3> cellsOut = new NativeArray<int3>(constrainedCount, m_Allocator);
+            var constrained = Constrain(ref constrainedCount);
+            var cellsOut = new NativeArray<int3>(constrainedCount, m_Allocator);
             cellCount = 0;
             for (int i = 0; i < constrainedCount; ++i)
             {
@@ -734,9 +737,10 @@ namespace UnityEngine.U2D.Common.UTess
             m_NumHulls = edgeCount * 2;
             m_NumPoints = pointCount;
             m_CellCount = 0;
-            m_Cells = new NativeArray<int3>(ModuleHandle.kMaxTriangleCount, m_Allocator);
-            m_ILArray = new NativeArray<int>(m_NumHulls * (m_NumHulls + 1), m_Allocator); // Make room for -1 node.
-            m_IUArray = new NativeArray<int>(m_NumHulls * (m_NumHulls + 1), m_Allocator); // Make room for -1 node.
+            int allocSize = m_NumHulls * (m_NumHulls + 1);
+            m_Cells = new Array<int3>(allocSize, ModuleHandle.kMaxTriangleCount, m_Allocator, NativeArrayOptions.UninitializedMemory);
+            m_ILArray = new NativeArray<int>(allocSize, m_Allocator); // Make room for -1 node.
+            m_IUArray = new NativeArray<int>(allocSize, m_Allocator); // Make room for -1 node.
 
             NativeArray<UHull> hulls = new NativeArray<UHull>(m_NumPoints * 8, m_Allocator);
             int hullCount = 0;
@@ -816,8 +820,8 @@ namespace UnityEngine.U2D.Common.UTess
             hull.ilcount = 0;
             hull.iucount = 0;
             hulls[hullCount++] = hull;
-            
-            
+
+
             for (int i = 0, numEvents = eventCount; i < numEvents; ++i)
             {
 
@@ -857,8 +861,11 @@ namespace UnityEngine.U2D.Common.UTess
             Tessellator tess = new Tessellator();
             tess.SetAllocator(allocator);
             int maxCount = 0, triCount = 0;
-            var valid = tess.Triangulate(pgPoints, pgPointCount, pgEdges, pgEdgeCount);
+            var valid = true;
+
+            valid = tess.Triangulate(pgPoints, pgPointCount, pgEdges, pgEdgeCount);
             valid = valid && tess.ApplyDelaunay(pgPoints, pgEdges);
+
             if (valid)
             {
                 // Output.

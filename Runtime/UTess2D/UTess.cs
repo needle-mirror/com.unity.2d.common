@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Unity.Profiling;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Collections.LowLevel.Unsafe;
@@ -84,8 +85,8 @@ namespace UnityEngine.U2D.Common.UTess
 
     unsafe struct IntersectionCompare : IComparer<int2>
     {
-        public NativeArray<double2> points;
-        public NativeArray<int2> edges;
+        public Array<double2> points;
+        public Array<int2> edges;
 
         public fixed double xvasort[4];
         public fixed double xvbsort[4];
@@ -280,7 +281,7 @@ namespace UnityEngine.U2D.Common.UTess
 
     internal struct ModuleHandle
     {
-    
+
         // Max Edge Count with Subdivision allowed. This is already a very relaxed limit
         // and anything beyond are basically littered with numerous paths.
         internal static readonly  int kMaxArea = 65536;
@@ -291,7 +292,7 @@ namespace UnityEngine.U2D.Common.UTess
         internal static readonly  int kMaxRefineIterations = 48;
         internal static readonly  int kMaxSmoothenIterations = 256;
         internal static readonly  float kIncrementAreaFactor = 1.2f;
-    
+
         internal static void Copy<T>(NativeArray<T> src, int srcIndex, NativeArray<T> dst, int dstIndex, int length)
             where T : struct
         {
@@ -320,9 +321,9 @@ namespace UnityEngine.U2D.Common.UTess
                 }
                 UnsafeUtility.WriteArrayElement<T>(array, j + 1, t);
             }
-        }        
-        
-        // Search Lower Bounds 
+        }
+
+        // Search Lower Bounds
         internal static int GetLower<T, U, X>(NativeArray<T> values, int count, U check, X condition)
             where T : struct where U : struct where X : ICondition2<T, U>
         {
@@ -368,6 +369,33 @@ namespace UnityEngine.U2D.Common.UTess
                 }
             }
             return i;
+        }
+
+        // Search for Equal
+        internal static int GetEqual<T, U, X>(Array<T> values, int count, U check, X condition)
+            where T : struct where U : struct where X : ICondition2<T, U>
+        {
+            int l = 0;
+            int h = count - 1;
+            while (l <= h)
+            {
+                int m = ((int)(l + h)) >> 1;
+                float t = 0;
+                condition.Test(values[m], check, ref t);
+                if (t == 0)
+                {
+                    return m;
+                }
+                else if (t <= 0)
+                {
+                    l = m + 1;
+                }
+                else
+                {
+                    h = m - 1;
+                }
+            }
+            return -1;
         }
 
         // Search for Equal
@@ -464,7 +492,7 @@ namespace UnityEngine.U2D.Common.UTess
 
             return !(has_neg && has_pos);
         }
-        
+
         internal static bool IsInsideTriangleApproximate(float2 pt, float2 v1, float2 v2, float2 v3)
         {
             float d0, d1, d2, d3;
@@ -474,8 +502,8 @@ namespace UnityEngine.U2D.Common.UTess
             d3 = TriangleArea(pt, v3, v1);
             float epsilon = 1.1102230246251565e-16f;
             return Mathf.Abs(d0 - (d1 + d2 + d3)) < epsilon;
-        }        
-        
+        }
+
         internal static bool IsInsideCircle(float2 a, float2 b, float2 c, float2 p)
         {
             float ab = math.dot(a, a);
@@ -523,7 +551,29 @@ namespace UnityEngine.U2D.Common.UTess
             }
             avgArea = avgArea / triangleCount;
         }
-        
+
+        internal static void BuildTriangles(NativeArray<float2> vertices, int vertexCount, NativeArray<int> indices, int indexCount, ref Array<UTriangle> triangles, ref int triangleCount, ref float maxArea, ref float avgArea, ref float minArea)
+        {
+            // Check if there are invalid triangles or segments.
+            for (int i = 0; i < indexCount; i += 3)
+            {
+                UTriangle tri = new UTriangle();
+                var i0 = indices[i + 0];
+                var i1 = indices[i + 1];
+                var i2 = indices[i + 2];
+                tri.va = vertices[i0];
+                tri.vb = vertices[i1];
+                tri.vc = vertices[i2];
+                tri.c = CircumCircle(tri);
+                tri.area = TriangleArea(tri.va, tri.vb, tri.vc);
+                maxArea = math.max(tri.area, maxArea);
+                minArea = math.min(tri.area, minArea);
+                avgArea = avgArea + tri.area;
+                triangles[triangleCount++] = tri;
+            }
+            avgArea = avgArea / triangleCount;
+        }
+
         internal static void BuildTriangles(NativeArray<float2> vertices, int vertexCount, NativeArray<int> indices, int indexCount, ref NativeArray<UTriangle> triangles, ref int triangleCount, ref float maxArea, ref float avgArea, ref float minArea, ref float maxEdge, ref float avgEdge, ref float minEdge)
         {
             // Check if there are invalid triangles or segments.
@@ -537,7 +587,7 @@ namespace UnityEngine.U2D.Common.UTess
                 tri.vb = vertices[i1];
                 tri.vc = vertices[i2];
                 tri.c = CircumCircle(tri);
-                
+
                 tri.area = TriangleArea(tri.va, tri.vb, tri.vc);
                 maxArea = math.max(tri.area, maxArea);
                 minArea = math.min(tri.area, minArea);
@@ -560,8 +610,8 @@ namespace UnityEngine.U2D.Common.UTess
             }
             avgArea = avgArea / triangleCount;
             avgEdge = avgEdge / indexCount;
-        }        
-        
+        }
+
         internal static void BuildTrianglesAndEdges(NativeArray<float2> vertices, int vertexCount, NativeArray<int> indices, int indexCount, ref NativeArray<UTriangle> triangles, ref int triangleCount, ref NativeArray<int4> delaEdges, ref int delaEdgeCount, ref float maxArea, ref float avgArea, ref float minArea)
         {
             // Check if there are invalid triangles or segments.
@@ -588,8 +638,8 @@ namespace UnityEngine.U2D.Common.UTess
                 triangles[triangleCount++] = tri;
             }
             avgArea = avgArea / triangleCount;
-        }        
-        
+        }
+
         static void CopyGraph(NativeArray<float2> srcPoints, int srcPointCount, ref NativeArray<float2> dstPoints, ref int dstPointCount, NativeArray<int2> srcEdges, int srcEdgeCount, ref NativeArray<int2> dstEdges, ref int dstEdgeCount)
         {
             dstEdgeCount = srcEdgeCount;
@@ -629,24 +679,24 @@ namespace UnityEngine.U2D.Common.UTess
             var ext = (max - min);
             var mid = ext * 0.5f;
             var kNonRect = 0.0001f;
-           
+
             // Construct a simple convex hull rect!.
             pgPointCount = resetTopology ? 0 : pgPointCount;
             var pc = pgPointCount;
             pgPoints[pgPointCount++] = new float2(min.x, min.y); pgPoints[pgPointCount++] = new float2(min.x - kNonRect, min.y + mid.y); pgPoints[pgPointCount++] = new float2(min.x, max.y); pgPoints[pgPointCount++] = new float2(min.x + mid.x, max.y + kNonRect);
             pgPoints[pgPointCount++] = new float2(max.x, max.y); pgPoints[pgPointCount++] = new float2(max.x + kNonRect, min.y + mid.y); pgPoints[pgPointCount++] = new float2(max.x, min.y); pgPoints[pgPointCount++] = new float2(min.x + mid.x, min.y - kNonRect);
-            
+
             pgEdgeCount = 8;
             pgEdges[0] = new int2(pc + 0, pc + 1); pgEdges[1] = new int2(pc + 1, pc + 2); pgEdges[2] = new int2(pc + 2, pc + 3); pgEdges[3] = new int2(pc + 3, pc + 4);
             pgEdges[4] = new int2(pc + 4, pc + 5); pgEdges[5] = new int2(pc + 5, pc + 6); pgEdges[6] = new int2(pc + 6, pc + 7); pgEdges[7] = new int2(pc + 7, pc + 0);
         }
-        
+
         // Reorder vertices.
         static void Reorder(int startVertexCount, int index, ref NativeArray<int> indices, ref int indexCount, ref NativeArray<float2> vertices, ref int vertexCount)
         {
-            
+
             var found = false;
-            
+
             for (var i = 0; i < indexCount; ++i)
             {
                 if (indices[i] != index) continue;
@@ -662,9 +712,9 @@ namespace UnityEngine.U2D.Common.UTess
                     if (indices[i] == vertexCount)
                         indices[i] = index;
             }
-            
+
         }
-        
+
         // Perform Sanitization.
         internal static void VertexCleanupConditioner(int startVertexCount, ref NativeArray<int> indices, ref int indexCount, ref NativeArray<float2> vertices, ref int vertexCount)
         {
@@ -673,7 +723,7 @@ namespace UnityEngine.U2D.Common.UTess
             {
                 Reorder(startVertexCount,i, ref indices, ref indexCount, ref vertices, ref vertexCount);
             }
-            
+
         }
 
         public static float4 ConvexQuad(Allocator allocator, NativeArray<float2> points, NativeArray<int2> edges, ref NativeArray<float2> outVertices, ref int outVertexCount, ref NativeArray<int> outIndices, ref int outIndexCount, ref NativeArray<int2> outEdges, ref int outEdgeCount)
@@ -683,7 +733,7 @@ namespace UnityEngine.U2D.Common.UTess
             outEdgeCount = 0; outIndexCount = 0; outVertexCount = 0;
             if (points.Length < 3 || points.Length >= kMaxVertexCount)
                 return ret;
-            
+
             // Ensure inputs form a proper PlanarGraph.
             int pgEdgeCount = 0, pgPointCount = 0;
             NativeArray<int2> pgEdges = new NativeArray<int2>(kMaxEdgeCount, allocator);
@@ -692,13 +742,13 @@ namespace UnityEngine.U2D.Common.UTess
             // Valid Edges and Paths, correct the Planar Graph. If invalid create a simple convex hull rect.
             GraphConditioner(points, ref pgPoints, ref pgPointCount, ref pgEdges, ref pgEdgeCount, true);
             Tessellator.Tessellate(allocator, pgPoints, pgPointCount, pgEdges, pgEdgeCount, ref outVertices, ref outVertexCount, ref outIndices, ref outIndexCount);
-            
-            // Dispose Temp Memory. 
+
+            // Dispose Temp Memory.
             pgPoints.Dispose();
             pgEdges.Dispose();
             return ret;
-        }        
-        
+        }
+
         public static float4 Tessellate(Allocator allocator, in NativeArray<float2> points, in NativeArray<int2> edges, ref NativeArray<float2> outVertices, out int outVertexCount, ref NativeArray<int> outIndices, out int outIndexCount, ref NativeArray<int2> outEdges, out int outEdgeCount)
         {
             // Inputs are garbage, just early out.
@@ -706,45 +756,46 @@ namespace UnityEngine.U2D.Common.UTess
             outEdgeCount = 0; outIndexCount = 0; outVertexCount = 0;
             if (points.Length < 3 || points.Length >= kMaxVertexCount)
                 return ret;
-            
+
             // Ensure inputs form a proper PlanarGraph.
             bool validGraph = false, handleEdgeCase = false;
             int pgEdgeCount = 0, pgPointCount = 0;
-            NativeArray<int2> pgEdges = new NativeArray<int2>(kMaxEdgeCount, allocator);
-            NativeArray<float2> pgPoints = new NativeArray<float2>(kMaxVertexCount, allocator);
+            NativeArray<int2> pgEdges = new NativeArray<int2>(edges.Length * 8, allocator);
+            NativeArray<float2> pgPoints = new NativeArray<float2>(points.Length * 4, allocator);
 
             // Valid Edges and Paths, correct the Planar Graph. If invalid create a simple convex hull rect.
             if (0 != edges.Length)
-            {                
+            {
                 validGraph = PlanarGraph.Validate(allocator, in points, points.Length, in edges, edges.Length, ref pgPoints,out pgPointCount, ref pgEdges, out pgEdgeCount);
-            }            
-            
-// Fallbacks are now handled by the Higher level packages. Enable if UTess needs to handle it.            
-// #if UTESS_QUAD_FALLBACK            
-//             if (!validGraph)
-//             {
-//                 pgPointCount = 0;
-//                 handleEdgeCase = true;
-//                 ModuleHandle.Copy(points, pgPoints, points.Length);
-//                 GraphConditioner(points, ref pgPoints, ref pgPointCount, ref pgEdges, ref pgEdgeCount, false);
-//             }
-// #else
+            }
 
-// If its not a valid Graph simply return back input Data without triangulation instead of going through UTess (pointless wasted cpu cycles).           
+            // Fallbacks are now handled by the Higher level packages. Enable if UTess needs to handle it.
+            // #if UTESS_QUAD_FALLBACK
+            //             if (!validGraph)
+            //             {
+            //                 pgPointCount = 0;
+            //                 handleEdgeCase = true;
+            //                 ModuleHandle.Copy(points, pgPoints, points.Length);
+            //                 GraphConditioner(points, ref pgPoints, ref pgPointCount, ref pgEdges, ref pgEdgeCount, false);
+            //             }
+            // #else
+
+            // If its not a valid Graph simply return back input Data without triangulation instead of going through UTess (pointless wasted cpu cycles).
             if (!validGraph)
             {
                 outEdgeCount = edges.Length;
                 outVertexCount = points.Length;
                 ModuleHandle.Copy(edges, outEdges, edges.Length);
-                ModuleHandle.Copy(points, outVertices, points.Length);                
+                ModuleHandle.Copy(points, outVertices, points.Length);
             }
 
             // Do a proper Delaunay Triangulation if Inputs are valid.
             if (pgPointCount > 2 && pgEdgeCount > 2)
             {
+                // Tessellate does not add new points, only PG and SD does. Assuming each point creates a degenerate triangle, * 4 is more than enough.
+                NativeArray<int> tsIndices = new NativeArray<int>(pgPointCount * 8, allocator);
+                NativeArray<float2> tsVertices = new NativeArray<float2>(pgPointCount * 4, allocator);
                 int tsIndexCount = 0, tsVertexCount = 0;
-                NativeArray<int> tsIndices = new NativeArray<int>(kMaxIndexCount, allocator);
-                NativeArray<float2> tsVertices = new NativeArray<float2>(kMaxVertexCount, allocator);
                 validGraph = Tessellator.Tessellate(allocator, pgPoints, pgPointCount, pgEdges, pgEdgeCount, ref tsVertices, ref tsVertexCount, ref tsIndices, ref tsIndexCount);
                 if (validGraph)
                 {
@@ -754,15 +805,15 @@ namespace UnityEngine.U2D.Common.UTess
                         outEdgeCount = 0;
                 }
                 tsVertices.Dispose();
-                tsIndices.Dispose();                
+                tsIndices.Dispose();
             }
 
-            // Dispose Temp Memory. 
+            // Dispose Temp Memory.
             pgPoints.Dispose();
             pgEdges.Dispose();
             return ret;
         }
-        
+
         public static float4 Subdivide(Allocator allocator, NativeArray<float2> points, NativeArray<int2> edges, ref NativeArray<float2> outVertices, ref int outVertexCount, ref NativeArray<int> outIndices, ref int outIndexCount, ref NativeArray<int2> outEdges, ref int outEdgeCount, float areaFactor, float targetArea, int refineIterations, int smoothenIterations)
         {
             // Inputs are garbage, just early out.
@@ -776,8 +827,8 @@ namespace UnityEngine.U2D.Common.UTess
             NativeArray<int> tsIndices = new NativeArray<int>(kMaxIndexCount, allocator);
             NativeArray<float2> tsVertices = new NativeArray<float2>(kMaxVertexCount, allocator);
             var validGraph = Tessellator.Tessellate(allocator, points, points.Length, edges, edges.Length, ref tsVertices, ref tsVertexCount, ref tsIndices, ref tsIndexCount);
-            
-            // Refinement and Smoothing. 
+
+            // Refinement and Smoothing.
             bool refined = false;
             bool refinementRequired = (targetArea != 0 || areaFactor != 0);
             if (validGraph && refinementRequired)
@@ -797,7 +848,7 @@ namespace UnityEngine.U2D.Common.UTess
                 {
                     // Increment for Iterations.
                     incArea = (targetArea / 10);
-                    
+
                     while (targetArea < kMaxArea && refineIterations > 0)
                     {
                         // Do Mesh Refinement.
@@ -817,14 +868,14 @@ namespace UnityEngine.U2D.Common.UTess
                         targetArea = targetArea + incArea;
                         refineIterations--;
                     }
-                    
+
                 }
                 else if (areaFactor != 0)
                 {
                     // Increment for Iterations.
                     areaFactor = math.lerp(0.1f, 0.54f, (areaFactor - 0.05f) / 0.45f); // Specific to Animation.
                     incArea = (areaFactor / 10);
-                    
+
                     while (areaFactor < 0.8f && refineIterations > 0)
                     {
                         // Do Mesh Refinement.
@@ -867,13 +918,13 @@ namespace UnityEngine.U2D.Common.UTess
                         TransferOutput(rfEdges, rfEdgeCount, ref outEdges, ref outEdgeCount, rfIndices, rfIndexCount, ref outIndices, ref outIndexCount, rfVertices, rfVertexCount, ref outVertices, ref outVertexCount);
                         smoothenIterations--;
                     }
-                    
+
                     // Sanitize generated geometry data.
                     var postSmoothen = outVertexCount;
                     if (ret.y != 0)
                         VertexCleanupConditioner(tsVertexCount, ref outIndices, ref outIndexCount, ref outVertices, ref outVertexCount);
                 }
-                
+
                 rfVertices.Dispose();
                 rfIndices.Dispose();
                 rfPoints.Dispose();
@@ -881,17 +932,17 @@ namespace UnityEngine.U2D.Common.UTess
             }
 
             // Refinement failed but Graph succeeded.
-            if (validGraph && !refined) 
+            if (validGraph && !refined)
             {
                 // Copy Out
                 TransferOutput(edges, edges.Length, ref outEdges, ref outEdgeCount, tsIndices, tsIndexCount, ref outIndices, ref outIndexCount, tsVertices, tsVertexCount, ref outVertices, ref outVertexCount);
             }
 
-            // Dispose Temp Memory. 
+            // Dispose Temp Memory.
             tsVertices.Dispose();
             tsIndices.Dispose();
             return ret;
-        }        
+        }
 
     }
 
