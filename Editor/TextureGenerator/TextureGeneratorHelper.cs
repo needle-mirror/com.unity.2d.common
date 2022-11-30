@@ -297,6 +297,22 @@ namespace UnityEditor.U2D.Common
             get { return m_FadeDistanceEnd; }
             set { m_FadeDistanceEnd = value; }
         }
+        
+        [SerializeField]
+        bool m_StreamingMipmaps;
+        public bool streamingMipmaps
+        {
+            get { return m_StreamingMipmaps; }
+            set { m_StreamingMipmaps = value; }
+        }
+        
+        [SerializeField]
+        int m_StreamingMipmapsPriority;
+        public int streamingMipmapsPriority
+        {
+            get { return m_StreamingMipmapsPriority; }
+            set { m_StreamingMipmapsPriority = value; }
+        }
 
         public TextureMipmapSettings()
         {
@@ -308,7 +324,7 @@ namespace UnityEditor.U2D.Common
             fadeDistanceEnd = 3;
         }
 
-        public TextureMipmapSettings(TextureImporterMipFilter filter, bool borderMipmap, bool fadeout, bool preserveCoverage, int fadeDistanceStart, int fadeDistanceEnd)
+        public TextureMipmapSettings(TextureImporterMipFilter filter, bool borderMipmap, bool fadeout, bool preserveCoverage, int fadeDistanceStart, int fadeDistanceEnd, bool streamingMipmaps, int streamingMipmapsPriority)
         {
             this.filter = filter;
             this.borderMipmap = borderMipmap;
@@ -316,6 +332,8 @@ namespace UnityEditor.U2D.Common
             this.preserveCoverage = preserveCoverage;
             this.fadeDistanceStart = fadeDistanceStart;
             this.fadeDistanceEnd = fadeDistanceEnd;
+            this.streamingMipmaps = streamingMipmaps;
+            this.streamingMipmapsPriority = streamingMipmapsPriority;
         }
 
         void ITextureSettings.FillTextureGenerationSettings(ref TextureGenerationSettings settings)
@@ -327,6 +345,8 @@ namespace UnityEditor.U2D.Common
             settings.textureImporterSettings.mipmapFadeDistanceStart = fadeDistanceStart;
             settings.textureImporterSettings.mipmapFadeDistanceEnd = fadeDistanceEnd;
             settings.textureImporterSettings.mipMapsPreserveCoverage = preserveCoverage;
+            settings.textureImporterSettings.streamingMipmaps = streamingMipmaps;
+            settings.textureImporterSettings.streamingMipmapsPriority = streamingMipmapsPriority;
         }
     }
 
@@ -493,7 +513,7 @@ namespace UnityEditor.U2D.Common
             TextureAlphaSettings alphaSettings = null, TextureMipmapSettings mipmapSettings = null, TextureCubemapSettings cubemapSettings = null, TextureWrapSettings wrapSettings = null)
         {
             if (mipmapSettings == null)
-                mipmapSettings = new TextureMipmapSettings(TextureImporterMipFilter.BoxFilter, false, false, false, 1, 3);
+                mipmapSettings = new TextureMipmapSettings(TextureImporterMipFilter.BoxFilter, false, false, false, 1, 3, false, 0);
 
             return GenerateTexture(buffer, bufferWidth, bufferHeight, TextureImporterType.Default, platformSettings, settings, alphaSettings, mipmapSettings, cubemapSettings, wrapSettings);
         }
@@ -592,6 +612,8 @@ namespace UnityEditor.U2D.Common
             ts.fadeDistanceStart = settings.mipmapFadeDistanceStart;
             ts.fadeDistanceEnd = settings.mipmapFadeDistanceEnd;
             ts.preserveCoverage = settings.mipMapsPreserveCoverage;
+            ts.streamingMipmaps = settings.streamingMipmaps;
+            ts.streamingMipmapsPriority = settings.streamingMipmapsPriority;
             return ts;
         }
 

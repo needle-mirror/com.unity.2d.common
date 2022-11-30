@@ -1,5 +1,10 @@
 # Changelog
 
+## [9.0.0-pre.2] - 2022-11-30
+### Added
+- Added mipmap streaming data to the mipmap settings class.
+- Added Scriptable Packer Object that can be used in a Sprite-Atlas for Optimal packing of Sprites.
+
 ## [9.0.0-pre.1] - 2022-09-21
 ### Changed
 - Refactored internal triangulation and tessellation APIs.
