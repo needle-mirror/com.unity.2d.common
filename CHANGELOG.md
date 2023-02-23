@@ -1,5 +1,9 @@
 # Changelog
 
+## [9.0.0] - 2023-02-23
+### Changed
+- Release for Unity 2023.1
+
 ## [9.0.0-pre.2] - 2022-11-30
 ### Added
 - Added mipmap streaming data to the mipmap settings class.
