@@ -1,5 +1,9 @@
 # Changelog
 
+## [9.0.1] - 2023-05-03
+### Fixed
+- Fixes for internal APIs.
+
 ## [9.0.0] - 2023-02-23
 ### Changed
 - Release for Unity 2023.1

@@ -51,8 +51,11 @@ namespace UnityEditor.U2D.Common.Path
 
         public override void OnInspectorGUI()
         {
+            var lwidth = EditorGUIUtility.labelWidth;
+            EditorGUIUtility.labelWidth = 96;
             DoTangentModeInspector();
             DoPositionInspector();
+            EditorGUIUtility.labelWidth = lwidth;
         }
 
         protected void DoTangentModeInspector()
@@ -95,8 +98,9 @@ namespace UnityEditor.U2D.Common.Path
                     m_Dragged = false;
 
                 EditorGUI.BeginChangeCheck();
-
-                var delta = EditorGUILayout.Vector2Field(Contents.positionLabel, position) - (Vector2)position;
+                Rect rect = EditorGUILayout.GetControlRect(true, EditorGUI.GetPropertyHeight(SerializedPropertyType.Vector2, Contents.positionLabel), EditorStyles.numberField);
+                rect.width += 80;
+                var delta = EditorGUI.Vector2Field(rect, Contents.positionLabel, position) - (Vector2)position;
 
                 if (EditorGUI.EndChangeCheck())
                 {

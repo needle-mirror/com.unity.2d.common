@@ -148,5 +148,25 @@ namespace UnityEditor.U2D.Common
         {
             return TextureImporter.defaultPlatformName;
         }
+
+        public static bool IsAnimated(UnityEngine.Object obj, SerializedProperty property)
+        {
+            return AnimationMode.IsPropertyAnimated(obj, property.propertyPath);
+        }
+        
+        public static bool IsCandidate(UnityEngine.Object obj, SerializedProperty property)
+        {
+            return AnimationMode.IsPropertyCandidate(obj, property.propertyPath);
+        }
+        
+        public static bool InAnimationRecording()
+        {
+            return AnimationMode.InAnimationRecording();
+        }
+
+        public static bool InAnimationPlaybackMode()
+        {
+            return AnimationMode.InAnimationPlaybackMode();
+        }
     }
 }

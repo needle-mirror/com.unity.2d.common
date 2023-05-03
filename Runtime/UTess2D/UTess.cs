@@ -749,7 +749,7 @@ namespace UnityEngine.U2D.Common.UTess
             return ret;
         }
 
-        public static float4 Tessellate(Allocator allocator, in NativeArray<float2> points, in NativeArray<int2> edges, ref NativeArray<float2> outVertices, out int outVertexCount, ref NativeArray<int> outIndices, out int outIndexCount, ref NativeArray<int2> outEdges, out int outEdgeCount)
+        public static float4 Tessellate(Allocator allocator, in NativeArray<float2> points, in NativeArray<int2> edges, ref NativeArray<float2> outVertices, out int outVertexCount, ref NativeArray<int> outIndices, out int outIndexCount, ref NativeArray<int2> outEdges, out int outEdgeCount, bool runPlanarGraph)
         {
             // Inputs are garbage, just early out.
             float4 ret = float4.zero;
@@ -764,9 +764,20 @@ namespace UnityEngine.U2D.Common.UTess
             NativeArray<float2> pgPoints = new NativeArray<float2>(points.Length * 4, allocator);
 
             // Valid Edges and Paths, correct the Planar Graph. If invalid create a simple convex hull rect.
-            if (0 != edges.Length)
+            if (runPlanarGraph)
             {
-                validGraph = PlanarGraph.Validate(allocator, in points, points.Length, in edges, edges.Length, ref pgPoints,out pgPointCount, ref pgEdges, out pgEdgeCount);
+                if (0 != edges.Length)
+                {
+                    validGraph = PlanarGraph.Validate(allocator, in points, points.Length, in edges, edges.Length, ref pgPoints, out pgPointCount, ref pgEdges, out pgEdgeCount);
+                }
+            }
+            else
+            {
+                // Just copy Stage.
+                pgEdgeCount = edges.Length;
+                pgPointCount = points.Length;
+                Copy(edges, pgEdges, pgEdgeCount);
+                Copy(points, pgPoints, pgPointCount);
             }
 
             // Fallbacks are now handled by the Higher level packages. Enable if UTess needs to handle it.
