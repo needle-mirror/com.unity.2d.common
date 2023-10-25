@@ -1,5 +1,9 @@
 # Changelog
 
+## [6.0.7] - 2023-10-25
+### Fixed
+- Fixed an issue where PSDImporter atlas size does not follow PVRTC compression format for the iOS platform
+
 ## [6.0.6] - 2022-10-25
 ### Changed
 - Refactored the internal triangulation and tessellation APIs.

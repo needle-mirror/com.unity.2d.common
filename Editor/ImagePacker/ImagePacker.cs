@@ -20,9 +20,9 @@ namespace UnityEditor.U2D.Common
         /// <param name="outPackedRects">Rects arranged within outPackedWidth and outPackedHeight</param>
         /// <param name="outPackedWidth">Width of the packed rects</param>
         /// <param name="outPackedHeight">Height of the packed rects</param>
-        public static void Pack(RectInt[] rects, int padding, out RectInt[] outPackedRects, out int outPackedWidth, out int outPackedHeight)
+        public static void Pack(RectInt[] rects, int padding, out RectInt[] outPackedRects, out int outPackedWidth, out int outPackedHeight, bool requireSquarePOT = false)
         {
-            var packNode = InternalPack(rects, padding);
+            var packNode = InternalPack(rects, padding, requireSquarePOT);
             outPackedWidth = packNode.rect.width;
             outPackedHeight = packNode.rect.height;
             var visitor = new CollectPackNodePositionVisitor();
@@ -52,7 +52,7 @@ namespace UnityEditor.U2D.Common
         /// <param name="outPackedBufferHeight">Packed image buffer's height</param>
         /// <param name="outPackedRect">Location of each image buffers in the packed buffer</param>
         /// <param name="outUVTransform">Translation data from image original buffer to packed buffer</param>
-        public static void Pack(NativeArray<Color32>[] buffers, int[] width, int[] height, int padding, out NativeArray<Color32> outPackedBuffer, out int outPackedBufferWidth, out int outPackedBufferHeight, out RectInt[] outPackedRect, out Vector2Int[] outUVTransform)
+        public static void Pack(NativeArray<Color32>[] buffers, int[] width, int[] height, int padding, out NativeArray<Color32> outPackedBuffer, out int outPackedBufferWidth, out int outPackedBufferHeight, out RectInt[] outPackedRect, out Vector2Int[] outUVTransform, bool requireSquarePOT = false)
         {
             UnityEngine.Profiling.Profiler.BeginSample("Pack");
             // Determine the area that contains data in the buffer
@@ -68,7 +68,7 @@ namespace UnityEditor.U2D.Common
                     t.height = tightRects[i].height;
                     tightRectArea[i] = t;
                 }
-                Pack(tightRectArea, padding, out outPackedRect, out outPackedBufferWidth, out outPackedBufferHeight);
+                Pack(tightRectArea, padding, out outPackedRect, out outPackedBufferWidth, out outPackedBufferHeight, requireSquarePOT);
                 var packBufferSize = (ulong)outPackedBufferWidth * (ulong)outPackedBufferHeight;
 
                 if (packBufferSize < 0 || packBufferSize >= int.MaxValue)
@@ -96,7 +96,7 @@ namespace UnityEditor.U2D.Common
             }
         }
 
-        static ImagePackNode InternalPack(RectInt[] rects, int padding)
+        static ImagePackNode InternalPack(RectInt[] rects, int padding, bool requireSquarePOT = false)
         {
             if (rects == null || rects.Length == 0)
                 return new ImagePackNode() { rect = new RectInt(0, 0, 0, 0)};
@@ -107,10 +107,13 @@ namespace UnityEditor.U2D.Common
                 sortedRects[i].rect = rects[i];
                 sortedRects[i].index = i;
             }
+            var initialWidth = (int)NextPowerOfTwo((ulong)rects[0].width);
             var initialHeight = (int)NextPowerOfTwo((ulong)rects[0].height);
+            if (requireSquarePOT)
+                initialWidth = initialHeight = (initialWidth > initialHeight) ? initialWidth : initialHeight;
             Array.Sort<ImagePackRect>(sortedRects);
             var root = new ImagePackNode();
-            root.rect = new RectInt(0, 0, (int)NextPowerOfTwo((ulong)rects[0].width), initialHeight);
+            root.rect = new RectInt(0, 0, initialWidth, initialHeight);
 
             for (int i = 0; i < rects.Length; ++i)
             {
@@ -125,6 +128,10 @@ namespace UnityEditor.U2D.Common
                     }
                     else
                         newHeight = (int)NextPowerOfTwo((ulong)root.rect.height + 1);
+
+                    if (requireSquarePOT)
+                        newWidth = newHeight = (newWidth > newHeight) ? newWidth : newHeight;
+
                     // Reset all packing and try again
                     root = new ImagePackNode();
                     root.rect = new RectInt(0, 0, newWidth, newHeight);
