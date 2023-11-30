@@ -1,5 +1,9 @@
 # Changelog
 
+## [9.0.3] - 2023-11-30
+### Added
+- Add ability to add lock to EditorWindow
+
 ## [9.0.2] - 2023-08-15
 ### Added
 - Added Samples for SpriteAtlas.

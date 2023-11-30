@@ -168,5 +168,15 @@ namespace UnityEditor.U2D.Common
         {
             return AnimationMode.InAnimationPlaybackMode();
         }
+
+        internal class EditorLockTracker : EditorGUIUtility.EditorLockTracker
+        {
+            public bool ShowButtonAtRect(Rect position, GUIStyle lockButtonStyle, bool disabled = false)
+            {
+                return ShowButton(position, lockButtonStyle, disabled);
+            }
+
+            public bool IsLocked() => isLocked;
+        }
     }
 }
