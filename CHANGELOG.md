@@ -1,5 +1,10 @@
 # Changelog
 
+## [9.0.4] - 2024-02-06
+
+### Changed
+- Internal changed to use public shortcut API.
+
 ## [9.0.3] - 2023-11-30
 ### Added
 - Add ability to add lock to EditorWindow
