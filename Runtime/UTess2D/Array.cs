@@ -74,6 +74,8 @@ namespace UnityEngine.U2D.Common.UTess
 
         public int Length => (m_MaxSize != 0) ? m_Array.Length : 0;
 
+        public int MaxSize => m_MaxSize;
+
         public void Dispose()
         {
             m_Array.Dispose();
