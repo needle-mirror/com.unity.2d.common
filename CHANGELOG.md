@@ -1,5 +1,9 @@
 # Changelog
 
+## [8.0.3] - 2024-06-25
+- ### Fixed
+- DANB-604 Fix case where Spriteshape vertex array exceeds limit even though it has not reached 64K.
+
 ## [8.0.2] - 2023-10-25
 ### Fixed
 - Fixed an issue where PSDImporter atlas size does not follow PVRTC compression format for the iOS platform
