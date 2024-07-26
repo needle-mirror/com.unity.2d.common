@@ -42,15 +42,31 @@ public class LoadFromAssetBundle : MonoBehaviour
     {
         var assetbundleToLoad = "atlasbundle";
 
-        var loadOp = UnityWebRequestAssetBundle.GetAssetBundle("file://" + Application.streamingAssetsPath + "/" + assetbundleToLoad);
+        UnityWebRequest loadOp;
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            loadOp = UnityWebRequestAssetBundle.GetAssetBundle(Application.streamingAssetsPath + "/" + assetbundleToLoad);
+        }
+        else
+        {
+            loadOp = UnityWebRequestAssetBundle.GetAssetBundle("file://" + Application.streamingAssetsPath + "/" + assetbundleToLoad);
+        }
+        
         yield return loadOp.SendWebRequest();
 
-        var ab = DownloadHandlerAssetBundle.GetContent(loadOp);
-        if (null != ab)
+        if (loadOp.result != UnityWebRequest.Result.Success)
         {
-            var sa = ab.LoadAsset<SpriteAtlas>("fromassetbundle.spriteatlasv2");
-            callback(sa);
-            Debug.Log("AssetBundle : " + tag + " has Atlas " + sa.name);
+            Debug.Log(loadOp.error);
+        }
+        else
+        {
+            var ab = DownloadHandlerAssetBundle.GetContent(loadOp);
+            if (null != ab)
+            {
+                var sa = ab.LoadAsset<SpriteAtlas>("fromassetbundle.spriteatlasv2");
+                callback(sa);
+                Debug.Log("AssetBundle : " + tag + " has Atlas " + sa.name);
+            }
         }
     }
 

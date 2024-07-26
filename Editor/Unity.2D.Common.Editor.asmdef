@@ -15,5 +15,16 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": []
+    "versionDefines": [
+        {
+            "name": "Unity",
+            "expression": "6000.0.6f1",
+            "define": "SPRITE_CUSTOM_DATA"
+        },
+        {
+            "name": "Unity",
+            "expression": "6000.0.13f1",
+            "define": "ENABLE_SPRITEMODULE_MODE"
+        }
+    ]
 }

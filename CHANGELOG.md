@@ -1,5 +1,12 @@
 # Changelog
 
+## [9.0.6] - 2024-07-26
+### Added
+- Internal functionality to support 2D Muse.
+
+### Changed
+- Atlas sample to use correct filepath when building for Android.
+
 ## [9.0.5] - 2024-05-16
 - ### Fixed
 - DANB-604 Fix case where Spriteshape vertex array exceeds limit even though it has not reached 64K.
