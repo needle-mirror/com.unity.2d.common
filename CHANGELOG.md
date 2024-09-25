@@ -1,5 +1,9 @@
 # Changelog
 
+## [6.0.8] - 2024-09-25
+### Added
+- Internal support for AssetPreview methods.
+
 ## [6.0.7] - 2023-10-25
 ### Fixed
 - Fixed an issue where PSDImporter atlas size does not follow PVRTC compression format for the iOS platform

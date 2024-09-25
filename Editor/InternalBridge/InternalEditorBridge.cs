@@ -29,7 +29,7 @@ namespace UnityEditor.U2D.Common
         {
             UnityEditor.Sprites.SpriteUtility.GenerateOutline(texture, rect, detail, alphaTolerance, holeDetection, out paths);
         }
-        
+
         public static void GenerateOutlineFromSprite(Sprite sprite, float detail, byte alphaTolerance, bool holeDetection, out Vector2[][] paths)
         {
             UnityEditor.Sprites.SpriteUtility.GenerateOutlineFromSprite(sprite, detail, alphaTolerance, holeDetection, out paths);
@@ -52,9 +52,9 @@ namespace UnityEditor.U2D.Common
 
         public static void ApplySpriteEditorWindow()
         {
-            SpriteUtilityWindow.ApplySpriteEditorWindow();    
+            SpriteUtilityWindow.ApplySpriteEditorWindow();
         }
-        
+
         public static void ApplyWireMaterial()
         {
             HandleUtility.ApplyWireMaterial();
@@ -119,7 +119,7 @@ namespace UnityEditor.U2D.Common
             return ProjectWindowUtil.GetActiveFolderPath();
         }
 
-        public static GUIContent GetIconContent<T>() where T : UnityEngine.Object 
+        public static GUIContent GetIconContent<T>() where T : UnityEngine.Object
         {
             return EditorGUIUtility.IconContent<T>();
         }
@@ -128,7 +128,7 @@ namespace UnityEditor.U2D.Common
         {
             return ProjectBrowser.kAssetCreationInstanceID_ForNonExistingAssets;
         }
-        
+
         public static VisualElement SceneViewCameraViewVisualElement(SceneView sc)
         {
             return sc.cameraViewVisualElement;
@@ -137,6 +137,26 @@ namespace UnityEditor.U2D.Common
         public static string TextureImporterDefaultPlatformName()
         {
             return TextureImporter.defaultPlatformName;
+        }
+
+        public static void SetAssetPreviewTextureCacheSize(int cacheSize, int clientId)
+        {
+            AssetPreview.SetPreviewTextureCacheSize(cacheSize, clientId);
+        }
+
+        public static Texture2D GetAssetPreview(int assetId, int clientId)
+        {
+            return AssetPreview.GetAssetPreview(assetId, clientId);
+        }
+
+        public static bool IsLoadingAssetPreview(int assetId, int clientId)
+        {
+            return AssetPreview.IsLoadingAssetPreview(assetId, clientId);
+        }
+
+        public static void ClearAssetPreviews(int clientId)
+        {
+            AssetPreview.DeletePreviewTextureManagerByID(clientId);
         }
     }
 }
