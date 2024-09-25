@@ -1,5 +1,9 @@
 # Changelog
 
+## [8.0.4] - 2024-09-25
+### Added
+- Internal support for AssetPreview methods.
+
 ## [8.0.3] - 2024-06-25
 - ### Fixed
 - DANB-604 Fix case where Spriteshape vertex array exceeds limit even though it has not reached 64K.
