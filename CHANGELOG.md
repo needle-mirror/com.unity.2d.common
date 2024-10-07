@@ -1,8 +1,14 @@
 # Changelog
 
+## [9.0.7] - 2024-10-07
+### Fixed
+- DANB-638 Fixed Error "InvalidOperationException: HTTP/1.1 404 Not Found" logged when entering Play Mode in 2D Common Sample Scene
+- DANB-637 Fixed Sprite Atlases included in the 2D Common Package Sample "Sprite Atlas Samples" are blurry even though they are uncompressed
+
 ## [9.0.6] - 2024-07-26
 ### Added
 - Internal functionality to support 2D Muse.
+- Internal support for AssetPreview methods.
 
 ### Changed
 - Atlas sample to use correct filepath when building for Android.

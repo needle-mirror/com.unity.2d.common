@@ -182,6 +182,26 @@ namespace UnityEditor.U2D.Common
 
             public bool IsLocked() => isLocked;
         }
+
+        public static void SetAssetPreviewTextureCacheSize(int cacheSize, int clientId)
+        {
+            AssetPreview.SetPreviewTextureCacheSize(cacheSize, clientId);
+        }
+
+        public static Texture2D GetAssetPreview(int assetId, int clientId)
+        {
+            return AssetPreview.GetAssetPreview(assetId, clientId);
+        }
+
+        public static bool IsLoadingAssetPreview(int assetId, int clientId)
+        {
+            return AssetPreview.IsLoadingAssetPreview(assetId, clientId);
+        }
+
+        public static void ClearAssetPreviews(int clientId)
+        {
+            AssetPreview.DeletePreviewTextureManagerByID(clientId);
+        }
     }
 
 #if ENABLE_SPRITEMODULE_MODE
