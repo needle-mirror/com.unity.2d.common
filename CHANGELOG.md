@@ -1,5 +1,13 @@
 # Changelog
 
+## [9.1.0] - 2025-03-07
+### Changed
+- Update minimum Unity version.
+
+### Fixed
+- DANB-811 Fix blurry Sprite Atlas Sample variant scene sprites
+- DANB-794 Fixed case where editing the Closed and Open Sprite Shapes is choppy
+
 ## [9.0.7] - 2024-10-07
 ### Fixed
 - DANB-638 Fixed Error "InvalidOperationException: HTTP/1.1 404 Not Found" logged when entering Play Mode in 2D Common Sample Scene

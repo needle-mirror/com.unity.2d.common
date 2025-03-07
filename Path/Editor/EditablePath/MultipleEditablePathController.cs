@@ -27,7 +27,7 @@ namespace UnityEditor.U2D.Common.Path
 
         public bool enableSnapping
         {
-            get { return EditorSnapSettings.gridSnapEnabled; }
+            get { return EditorSnapSettings.gridSnapActive; }
         }
 
         public void ClearPaths()
