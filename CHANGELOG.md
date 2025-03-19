@@ -1,11 +1,21 @@
 # Changelog
 
+## [8.1.0] - 2025-03-19
+
+### Changed
+- Update Unity minimum version.
+
+### Fixed
+- DANB-796 Fixed case where 2D PSD Importer generates mipmaps when "Generate Mip Maps" is disabled
+- DANB-422 Fix case where Sprite Shape is not filled when "Closed Sprite Shape" is enabled and "Detail" is set to "High Quality"
+
+
 ## [8.0.4] - 2024-09-25
 ### Added
 - Internal support for AssetPreview methods.
 
 ## [8.0.3] - 2024-06-25
-- ### Fixed
+### Fixed
 - DANB-604 Fix case where Spriteshape vertex array exceeds limit even though it has not reached 64K.
 
 ## [8.0.2] - 2023-10-25

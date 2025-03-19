@@ -492,9 +492,6 @@ namespace UnityEditor.U2D.Common
         public static TextureGenerationOutput GenerateTextureDefault(NativeArray<Color32> buffer, int bufferWidth, int bufferHeight, TextureSettings settings, TextureImporterPlatformSettings platformSettings,
             TextureAlphaSettings alphaSettings = null, TextureMipmapSettings mipmapSettings = null, TextureCubemapSettings cubemapSettings = null, TextureWrapSettings wrapSettings = null)
         {
-            if (mipmapSettings == null)
-                mipmapSettings = new TextureMipmapSettings(TextureImporterMipFilter.BoxFilter, false, false, false, 1, 3);
-
             return GenerateTexture(buffer, bufferWidth, bufferHeight, TextureImporterType.Default, platformSettings, settings, alphaSettings, mipmapSettings, cubemapSettings, wrapSettings);
         }
 
