@@ -1,4 +1,12 @@
 # Changelog
+## [6.1.0] - 2025-04-15
+### Changed
+- Update Unity minimum version.
+
+### Fixed
+- DANB-422 Fix case where Sprite Shape is not filled when "Closed Sprite Shape" is enabled and "Detail" is set to "High Quality"
+- DANB-796 Fixed case where 2D PSD Importer generates mipmaps when "Generate Mip Maps" is disabled
+- DANB-879 Fixed misaligned text in 2D Animation preferences
 
 ## [6.0.8] - 2024-09-25
 ### Added
