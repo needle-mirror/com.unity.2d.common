@@ -1,5 +1,14 @@
 # Changelog
 
+## [11.0.0] - 2025-04-21
+### Added
+- Added support to allow 2D Enhancer to integrate with Sprite Editor Window
+
+## [9.1.1] - 2025-03-07
+### Fixed
+- DANB-796 Fixed case where 2D PSD Importer generates mipmaps when "Generate Mip Maps" is disabled
+- DANB-879 Fixed misaligned text in 2D Animation preferences
+
 ## [9.1.0] - 2025-03-07
 ### Changed
 - Update minimum Unity version.
@@ -61,7 +70,7 @@
 - Refactored internal triangulation and tessellation APIs.
 - Update com.unity.burst dependency version to 1.7.3 to support latest PS4 SDK.
 - Mark package for Unity Editor 2023.1.
-- Added support for different sized texture inputs in ImagePacker. 
+- Added support for different sized texture inputs in ImagePacker.
 
 ## [8.0.0-pre.2] - 2022-05-31
 ### Added
@@ -85,7 +94,7 @@
 - Added access to the internal helper method IsUsingDeformableBuffer.
 
 ### Fixed
-- Allow internal TextureGenerator helper consider swizzle data. 
+- Allow internal TextureGenerator helper consider swizzle data.
 
 ### Fixed
 - 1368956 Deleting certain vertices in sprite mesh leads to mesh resetted to quad incorrectly

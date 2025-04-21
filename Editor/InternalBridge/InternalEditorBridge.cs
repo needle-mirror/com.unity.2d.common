@@ -204,11 +204,9 @@ namespace UnityEditor.U2D.Common
         }
     }
 
-#if ENABLE_SPRITEMODULE_MODE
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     internal class SpriteFrameModuleModeAttribute : SpriteEditorModuleModeAttribute
     {
         public SpriteFrameModuleModeAttribute(bool showAsModule = false):base(showAsModule, typeof(SpriteFrameModule)) {}
     }
-#endif
 }

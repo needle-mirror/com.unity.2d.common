@@ -6,23 +6,20 @@ using UnityEngine;
 
 namespace UnityEditor.U2D.Common
 {
-    internal abstract class SpriteEditorModeBase : UnityEditor.U2D.Sprites.SpriteEditorModeBase
+    [SpriteEditorModuleMode(types: new[] { typeof(SpriteFrameModule) })]
+    internal abstract class SpriteEditorFrameModuleModeBase : ISpriteEditorModuleMode
     {
-        event Action<Sprites.SpriteEditorModeBase> m_ModeActivateCallback = _ => { };
+        ISpriteEditor m_SpriteEditor;
+        event Action<ISpriteEditorModuleMode> m_ModeActivateCallback = _ => { };
         event Action<SpriteRect> m_SpriteEditorSpriteSelectionChanged = _ => { };
         SpriteEditorModuleModeSupportBase m_Module;
 
         public SpriteEditorModuleBase module => m_Module;
 
-        public override bool ActivateMode()
-        {
-            return false;
-        }
+        public abstract bool ActivateMode();
 
-        public override void DeactivateMode()
-        { }
-
-        public override void OnAddToModule(UnityEditor.U2D.Sprites.SpriteEditorModuleModeSupportBase module)
+        public abstract void DeactivateMode();
+        public void OnAddToModule(UnityEditor.U2D.Sprites.SpriteEditorModuleModeSupportBase module)
         {
             m_Module = module;
             spriteEditor.GetMainVisualContainer().RegisterCallback<SpriteSelectionChangeEvent>(OnSpriteEditorSpriteSelectionChanged);
@@ -31,7 +28,7 @@ namespace UnityEditor.U2D.Common
 
         protected abstract void OnAddToModuleInternal(SpriteEditorModuleBase module);
 
-        public override void OnRemoveFromModule(UnityEditor.U2D.Sprites.SpriteEditorModuleModeSupportBase module)
+        public void OnRemoveFromModule(UnityEditor.U2D.Sprites.SpriteEditorModuleModeSupportBase module)
         {
             if (m_Module == module)
             {
@@ -41,52 +38,44 @@ namespace UnityEditor.U2D.Common
             }
         }
 
+        public event Action<ISpriteEditorModuleMode> onModeRequestActivate
+        {
+            add => m_ModeActivateCallback += value;
+            remove => m_ModeActivateCallback += value;
+        }
+
+        protected abstract void OnRemoveFromModuleInternal(SpriteEditorModuleBase module);
+
         void OnSpriteEditorSpriteSelectionChanged(SpriteSelectionChangeEvent evt)
         {
             m_SpriteEditorSpriteSelectionChanged?.Invoke(spriteEditor.selectedSpriteRect);
         }
 
-        protected abstract void OnRemoveFromModuleInternal(SpriteEditorModuleBase module);
-
-        public override void RegisterOnModeRequestActivate(Action<Sprites.SpriteEditorModeBase> onActivate)
+        public void RequestModeToActivate(ISpriteEditorModuleMode moduleMode)
         {
-            m_ModeActivateCallback += onActivate;
+            m_ModeActivateCallback?.Invoke(moduleMode);
         }
 
-        public override void UnregisterOnModeRequestActivate(Action<Sprites.SpriteEditorModeBase> onActivate)
+        public abstract bool ApplyModeData(bool apply, HashSet<Type> dataProviderTypes);
+
+        public void RequestModeToActivate()
         {
-            m_ModeActivateCallback -= onActivate;
+            RequestModeToActivate(this);
         }
 
-        protected void SignalModeActivate(SpriteEditorModeBase mode)
+        public ISpriteEditor spriteEditor
         {
-            m_ModeActivateCallback(mode);
+            get => m_SpriteEditor;
+            set => m_SpriteEditor = value;
         }
 
-        public override bool ApplyModeData(bool apply, HashSet<Type> dataProviderTypes)
-        {
-            return apply;
-        }
+        public abstract bool CanBeActivated();
 
-        public void RegisterModuleActivate(Action onActivate)
-        {
-            m_Module.RegisterModuleActivate(onActivate);
-        }
+        public abstract void DoMainGUI();
 
-        public void UnregisterModuleActivate(Action onActivate)
-        {
-            m_Module.UnregisterModuleActivate(onActivate);
-        }
+        public abstract void DoToolbarGUI(Rect drawArea);
 
-        public void RegisterSpriteEditorSpriteSelectionChanged(Action<SpriteRect> onSpriteRectChanged)
-        {
-            m_SpriteEditorSpriteSelectionChanged += onSpriteRectChanged;
-        }
-
-        public void UnregisterSpriteEditorSpriteSelectionChanged(Action<SpriteRect> onSpriteRectChanged)
-        {
-            m_SpriteEditorSpriteSelectionChanged -= onSpriteRectChanged;
-        }
+        public abstract void DoPostGUI();
     }
 }
 #endif

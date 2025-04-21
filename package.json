@@ -1,8 +1,8 @@
 {
   "name": "com.unity.2d.common",
   "displayName": "2D Common",
-  "version": "9.1.0",
-  "unity": "6000.0",
+  "version": "11.0.0",
+  "unity": "6000.2",
   "description": "2D Common is a package that contains shared functionalities that are used by most of the other 2D packages.",
   "keywords": [
     "2d"
@@ -23,18 +23,19 @@
     }
   ],
   "relatedPackages": {
-    "com.unity.2d.common.tests": "9.1.0"
+    "com.unity.2d.common.tests": "11.0.0"
   },
+  "unityRelease": "0a9",
   "_upm": {
-    "changelog": "### Changed\n- Update minimum Unity version.\n\n### Fixed\n- DANB-811 Fix blurry Sprite Atlas Sample variant scene sprites\n- DANB-794 Fixed case where editing the Closed and Open Sprite Shapes is choppy"
+    "changelog": "### Added\n- Added support to allow 2D Enhancer to integrate with Sprite Editor Window"
   },
   "upmCi": {
-    "footprint": "06c7dde83c4ee10b476d1df7f11ed3280a5bae3f"
+    "footprint": "d7e28314fd4a54d3358aa77ccbffd9203a6e7685"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.2d.common@9.1/manual/index.html",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.2d.common@11.0/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/2d.git",
     "type": "git",
-    "revision": "94a6127c9283f843ec1c9482222d58cde9b291e9"
+    "revision": "2de050da32ae86669040e7945167fd37a731ddd1"
   }
 }
