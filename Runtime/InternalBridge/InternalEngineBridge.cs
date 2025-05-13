@@ -56,6 +56,13 @@ namespace UnityEngine.U2D.Common
             return SpriteRendererDataAccessExtensions.IsGPUSkinningEnabled();
         }
 
+#if SRPBATCHINGENABLED_CHECK_AVAILABLE
+        public static bool IsSRPBatchingEnabled(SpriteRenderer spriteRenderer)
+        {
+            return SpriteRendererDataAccessExtensions.IsSRPBatchingEnabled(spriteRenderer);
+        }
+#endif
+
         public static void SetBatchDeformableBufferAndLocalAABBArray(SpriteRenderer[] spriteRenderers, NativeArray<IntPtr> buffers, NativeArray<int> bufferSizes, NativeArray<Bounds> bounds)
         {
             SpriteRendererDataAccessExtensions.SetBatchDeformableBufferAndLocalAABBArray(spriteRenderers, buffers, bufferSizes, bounds);
@@ -76,7 +83,7 @@ namespace UnityEngine.U2D.Common
         {
             return (element.pseudoStates & PseudoStates.Checked) == PseudoStates.Checked;
         }
-        
+
         public static bool IsHovered(this VisualElement element)
         {
             return (element.pseudoStates & PseudoStates.Hover) == PseudoStates.Hover;
@@ -100,7 +107,7 @@ namespace UnityEngine.U2D.Common
         {
             return Animations.DiscreteEvaluationAttributeUtilities.ConvertFloatToDiscreteInt(f);
         }
-        
+
         public static float ConvertIntToFloat(int i)
         {
             return Animations.DiscreteEvaluationAttributeUtilities.ConvertDiscreteIntToFloat(i);

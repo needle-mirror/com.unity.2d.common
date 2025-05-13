@@ -1,8 +1,9 @@
 {
   "name": "com.unity.2d.common",
   "displayName": "2D Common",
-  "version": "9.1.0",
-  "unity": "6000.0",
+  "version": "10.0.0",
+  "unity": "6000.1",
+  "unityRelease": "0a9",
   "description": "2D Common is a package that contains shared functionalities that are used by most of the other 2D packages.",
   "keywords": [
     "2d"
@@ -23,18 +24,18 @@
     }
   ],
   "relatedPackages": {
-    "com.unity.2d.common.tests": "9.1.0"
+    "com.unity.2d.common.tests": "10.0.0"
   },
   "_upm": {
-    "changelog": "### Changed\n- Update minimum Unity version.\n\n### Fixed\n- DANB-811 Fix blurry Sprite Atlas Sample variant scene sprites\n- DANB-794 Fixed case where editing the Closed and Open Sprite Shapes is choppy"
+    "changelog": "### Changed\n- Update minimum Unity version.\n\n### Fixed\n- DANB-796 Fixed case where 2D PSD Importer generates mipmaps when \"Generate Mip Maps\" is disabled\n- DANB-879 Fixed misaligned text in 2D Animation preferences"
   },
   "upmCi": {
-    "footprint": "06c7dde83c4ee10b476d1df7f11ed3280a5bae3f"
+    "footprint": "9a4c696452890245e4dd519f6c67e57ba6df5298"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.2d.common@9.1/manual/index.html",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.2d.common@10.0/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/2d.git",
     "type": "git",
-    "revision": "94a6127c9283f843ec1c9482222d58cde9b291e9"
+    "revision": "1e30f3ce6435ad72ffdd79c887034988b10b080b"
   }
 }
