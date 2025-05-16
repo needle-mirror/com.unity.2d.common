@@ -1,5 +1,9 @@
 # Changelog
 
+## [11.0.1] - 2025-05-16
+### Changed
+- Added support code for PolySpatial.
+
 ## [11.0.0] - 2025-04-21
 ### Added
 - Added support to allow 2D Enhancer to integrate with Sprite Editor Window

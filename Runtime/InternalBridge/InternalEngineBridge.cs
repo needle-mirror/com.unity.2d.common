@@ -110,5 +110,10 @@ namespace UnityEngine.U2D.Common
         {
             return Animations.DiscreteEvaluationAttributeUtilities.ConvertDiscreteIntToFloat(i);
         }
+
+        public static void MarkDirty(this UnityEngine.Object obj)
+        {
+            obj.MarkDirty();
+        }
     }
 }
