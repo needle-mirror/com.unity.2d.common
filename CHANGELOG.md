@@ -1,5 +1,10 @@
 # Changelog
 
+## [9.1.1] - 2025-05-26
+### Fixed
+- DANB-796 Fixed case where 2D PSD Importer generates mipmaps when "Generate Mip Maps" is disabled
+- DANB-879 Fixed misaligned text in 2D Animation preferences
+
 ## [9.1.0] - 2025-03-07
 ### Changed
 - Update minimum Unity version.
