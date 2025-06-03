@@ -1,5 +1,10 @@
 # Changelog
 
+## [8.1.1] - 2025-06-03
+
+### Fixed
+- DANB-879 Fixed misaligned text in 2D Animation preferences
+
 ## [8.1.0] - 2025-03-19
 
 ### Changed
@@ -8,7 +13,6 @@
 ### Fixed
 - DANB-796 Fixed case where 2D PSD Importer generates mipmaps when "Generate Mip Maps" is disabled
 - DANB-422 Fix case where Sprite Shape is not filled when "Closed Sprite Shape" is enabled and "Detail" is set to "High Quality"
-
 
 ## [8.0.4] - 2024-09-25
 ### Added
