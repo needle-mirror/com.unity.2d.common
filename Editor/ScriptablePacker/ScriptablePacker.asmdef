@@ -3,7 +3,10 @@
     "rootNamespace": "",
     "references": [
         "Unity.Burst",
-        "Unity.Mathematics"
+        "Unity.Mathematics",
+        "Unity.Collections",
+        "Unity.2D.Common.Runtime",
+        "Unity.U2D.Common.URaster"
     ],
     "includePlatforms": [
         "Editor"

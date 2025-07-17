@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using Unity.Profiling;
 using Unity.Collections;
 using Unity.Mathematics;
+using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
 
 namespace UnityEngine.U2D.Common.UTess
@@ -528,6 +526,128 @@ namespace UnityEngine.U2D.Common.UTess
             float circum_radius = math.distance(a, circum);
             float dist = math.distance(p, circum);
             return circum_radius - dist > 0.00001f;
+        }
+
+        internal static void GetIntermediate(ushort a, ushort b, ref int3 res)
+        {
+            int ia = a, ib = b;
+            res.x = math.min(ia, ib) << 16 | math.max(ia, ib);
+            res.y = ia;
+            res.z = ib;
+        }
+
+        internal static unsafe void RawSort(int3* data, int length)
+        {
+            int i, j, k = length;
+            int3 t;
+            for (i = 0; i < k; i++)
+            {
+                j = i;
+                t = data[i + 1];
+                while (j >= 0 && t.x < data[j].x)
+                {
+                    data[j + 1] = data[j];
+                    j--;
+                }
+                data[j + 1] = t;
+            }
+        }
+
+        /// <summary>
+        /// The idea here is to:
+        /// 1. Sort the Triangle Indices based on connected Edges (Direction Independent). Helps Step 2.
+        /// 2. Isolate Outline Edges by removing Edges that occur more than once from the above Set.
+        /// 3. Connect these Isolated Edges by simply testing for Edge Indices. Iterate until all Edges are connected.
+        /// </summary>
+        internal static int GenerateOutlineFromTriangleIndices(in NativeArray<ushort> indices, ref NativeArray<int2> outline)
+        {
+
+            // Optimal Outline.
+            var inputLength = indices.Length;
+            var outlineIndices = 0;
+            var sorted = new NativeArray<int3>(inputLength * 4, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+
+            unsafe
+            {
+                var input_ = (ushort*)indices.GetUnsafeReadOnlyPtr();
+                var sorted_ = (int3*)sorted.GetUnsafeReadOnlyPtr();
+                var unique_ = (int3*)(sorted_) + (inputLength * 2);
+                for (int i = 0; i < inputLength; i = i + 3)
+                {
+                    GetIntermediate(input_[i + 0], input_[i + 1], ref sorted_[i + 0]);
+                    GetIntermediate(input_[i + 1], input_[i + 2], ref sorted_[i + 1]);
+                    GetIntermediate(input_[i + 2], input_[i + 0], ref sorted_[i + 2]);
+                }
+                RawSort(sorted_, inputLength - 1);
+
+                for (int i = 0; i < inputLength; ++i)
+                {
+                    int e = (i + 1) % inputLength;
+
+                    if (sorted_[i].x != sorted_[e].x)
+                    {
+                        unique_[outlineIndices++] = sorted_[i];
+                    }
+                    else
+                    {
+                        for (int k = i + 1; k < inputLength; ++k)
+                        {
+                            if (sorted_[i].x != sorted_[k].x)
+                            {
+                                break;
+                            }
+
+                            ++i;
+                        }
+                    }
+                }
+
+                for (int i = 0, cursor = 0; i < outlineIndices; ++i)
+                {
+                    if (unique_[i].x < Int32.MaxValue)
+                    {
+                        var inc = true;
+                        sorted_[cursor] = unique_[i];
+                        unique_[i].x = Int32.MaxValue;
+
+                        for (int j = i + 1; j < outlineIndices; ++j)
+                        {
+                            if (unique_[j].x < Int32.MaxValue)
+                            {
+                                if (sorted_[cursor].y == unique_[j].z || sorted_[cursor].z == unique_[j].y)
+                                {
+                                    sorted_[++cursor] = unique_[j];
+                                    unique_[j].x = Int32.MaxValue;
+                                    j = i + 1;
+                                }
+
+                                inc = false;
+                            }
+
+                            i = inc ? (i + 1) : i;
+                        }
+
+                        sorted_[++cursor] = unique_[i];
+                    }
+                }
+
+            }
+
+            // Return Data.
+            if (0 != outlineIndices)
+            {
+                unsafe
+                {
+                    var sorted_ = (int3*)sorted.GetUnsafeReadOnlyPtr();
+                    var outline_ = (int2*)outline.GetUnsafeReadOnlyPtr();
+                    for (int i = 0; i < outlineIndices; ++i)
+                        outline_[i] = sorted_[i].yz;
+                }
+
+                return outlineIndices;
+            }
+            return 0;
+
         }
 
         internal static void BuildTriangles(NativeArray<float2> vertices, int vertexCount, NativeArray<int> indices, int indexCount, ref NativeArray<UTriangle> triangles, ref int triangleCount, ref float maxArea, ref float avgArea, ref float minArea)

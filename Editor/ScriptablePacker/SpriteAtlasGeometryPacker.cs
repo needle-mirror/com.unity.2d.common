@@ -8,12 +8,32 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine.U2D.Common.URaster;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs.LowLevel.Unsafe;
 
 namespace UnityEditor.U2D.Common.SpriteAtlasPacker
 {
 
-    namespace DefaultPack
+    namespace GeometryPack
     {
+        internal enum PackingStyle
+        {
+            // Half Square
+            Ramp,
+            // Default
+            Default,
+            // Square
+            Square
+        }
+
+        internal enum PackingQuality
+        {
+            // Very Tight Packing.
+            High,
+            // Default
+            Default,
+            // Fast Packing
+            Fast
+        }
 
         // Internal Config params.
         internal struct UPackConfig
@@ -29,18 +49,25 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
             // Block Offset.
             internal int bOffset;
             // Reserved.
-            internal int freeBox;
-            // Reserved.
             internal int jobSize;
             // Reserved.
             internal int sprSize;
+            // Reserved.
+            internal PackingStyle style;
         }
 
         // Pixel Mask. Stores Rasterized Sprite Pixels.
-        internal struct PixelMask
+        internal struct ConvexMask
         {
             // Pixel Data
             internal Pixels pixels;
+            // Vector Count
+            internal int pointcount;
+            // Area & Size
+            internal float3 area;
+            // Convexified Polygon Data.
+            [NativeDisableContainerSafetyRestriction]
+            internal NativeArray<float2> convex;
         };
 
         // Atlas Masks. Stores Multiple Rasterized Sprite Pixels.
@@ -48,6 +75,31 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
         {
             // Pixel Data
             internal Pixels pixels;
+            // Point.
+            internal int convexCount;
+            // Fit Count
+            internal int fitCount;
+            // Max
+            internal float3 corner;
+            // Area
+            internal float area;
+            // Convexified Polygon DataSet.
+            [NativeDisableContainerSafetyRestriction]
+            internal NativeArray<int2> fitSet;
+            // Convexified Polygon DataSet.
+            [NativeDisableContainerSafetyRestriction]
+            internal NativeArray<int3> convexSet;
+            // Convexified Polygon Data.
+            [NativeDisableContainerSafetyRestriction]
+            internal NativeArray<float2> convex;
+        };
+
+        // Intermediate Working Dataset.
+        internal struct ScratchData
+        {
+            // Convexified Polygon Data.
+            [NativeDisableContainerSafetyRestriction]
+            internal NativeArray<float2> geom;
         };
 
         [BurstCompile]
@@ -74,16 +126,18 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                 public int seed;
                 // SpriteRaster
                 [NativeDisableContainerSafetyRestriction]
-                public NativeArray<PixelMask> spriteMasks;
+                public NativeArray<ConvexMask> spriteMasks;
                 // Vector2 positions.
                 [NativeDisableUnsafePtrRestriction]
                 public Vector2* vertices;
                 // Indices
                 [NativeDisableUnsafePtrRestriction]
                 public int* indices;
+#if DEBUGPIXEL
                 // Input Pixels
                 [NativeDisableUnsafePtrRestriction]
                 public Color32* pixels;
+#endif
 
                 public void Execute()
                 {
@@ -93,31 +147,23 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                     spriteMask.pixels.rect.z = spriteMask.pixels.rect.w = spriteMask.pixels.minmax.z = spriteMask.pixels.minmax.w = 0;
                     spriteMask.pixels.rect.x = spriteMask.pixels.rect.y = spriteMask.pixels.minmax.x = spriteMask.pixels.minmax.y = cfg.sprSize;
 
+#if DEBUGPIXEL
                     UnsafeUtility.MemClear(spriteMask.pixels.data.GetUnsafePtr(), ((spriteMask.pixels.rect.w * spriteMask.pixels.size.x) + spriteMask.pixels.rect.z) * UnsafeUtility.SizeOf<Color32>());
                     UnityEngine.U2D.Common.URaster.RasterUtils.Rasterize(pixels, ref textureCfg, vertices, vertexCount, indices, indexCount, ref spriteMask.pixels, cfg.padding, cfg.padding);
                     byte color = UnityEngine.U2D.Common.URaster.RasterUtils.Color32ToByte(new Color32(254, 64, 64, 254));
-
-                    // If Tight packing fill Rect.
-                    if (0 == cfg.packing)
-                    {
-                        // For Rect
-                        for (int y = spriteMask.pixels.rect.y; y <= spriteMask.pixels.rect.w; ++y)
-                        {
-                            for (int x = spriteMask.pixels.rect.x; x <= spriteMask.pixels.rect.z; ++x)
-                            {
-                                spriteMask.pixels.data[y * spriteMask.pixels.size.x + x] = (spriteMask.pixels.data[y * spriteMask.pixels.size.x + x] != 0) ? spriteMask.pixels.data[y * spriteMask.pixels.size.x + x] : color;
-                            }
-                        }
-                    }
+#endif
 
                     spriteMask.pixels.rect.x = math.max(0, spriteMask.pixels.minmax.x - cfg.padding);
                     spriteMask.pixels.rect.y = math.max(0, spriteMask.pixels.minmax.y - cfg.padding);
                     spriteMask.pixels.rect.z = math.min(cfg.maxSize, spriteMask.pixels.minmax.z + cfg.padding);
                     spriteMask.pixels.rect.w = math.min(cfg.maxSize, spriteMask.pixels.minmax.w + cfg.padding);
+                    spriteMask.pointcount = 0;
+
+                    // Generate Convex Hull.
+                    spriteMask.area = UnityEngine.U2D.Common.UTess.ConvexHull2D.Generate(ref spriteMask.convex, ref spriteMask.pointcount, seed, vertices, vertexCount, cfg.padding * 0.25f);
                     spriteMasks[index] = spriteMask;
 
                 }
-
             }
 
             ////////////////////////////////////////////////////////////////
@@ -125,18 +171,66 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
             ////////////////////////////////////////////////////////////////
 
             [BurstCompile]
-            internal static bool TestMask(ref AtlasMask atlasMask, ref PixelMask spriteMask, int ax, int ay, int sx, int sy)
+            internal static bool TestOverlap(ref UPackConfig cfg, ref AtlasMask atlasMask, ref ConvexMask spriteMask, ref NativeArray<float2> testMask, int x, int y)
+            {
+
+                // Check if we need to do this check at all.
+                if (0 == atlasMask.convexCount)
+                {
+                    return false;
+                }
+
+                // Check if there is enough free Area.
+                if (spriteMask.area.z * cfg.bOffset > atlasMask.corner.z && x < atlasMask.corner.x && y < atlasMask.corner.y)
+                {
+                    return true;
+                }
+
+                // Check if this go beyond active rect
+                if (spriteMask.area.x + x > atlasMask.pixels.rect.x || spriteMask.area.y + y > atlasMask.pixels.rect.y)
+                {
+                    return true;
+                }
+
+                // Temp Alloc
+                unsafe
+                {
+                    var testMask_ = (float2*)testMask.GetUnsafeReadOnlyPtr();
+                    var sprtMask_ = (float2*)spriteMask.convex.GetUnsafeReadOnlyPtr();
+                    for (int i = 0; i < spriteMask.pointcount; ++i)
+                    {
+                        testMask_[i] = new float2(sprtMask_[i].x + x, sprtMask_[i].y + y);
+                        if (testMask_[i].x >= atlasMask.pixels.rect.x || testMask_[i].y >= atlasMask.pixels.rect.y)
+                            return true;
+                    }
+                }
+
+                // Test Collision
+                for (int i = 0; i < atlasMask.convexCount; ++i)
+                {
+                    var atlasedSprite = atlasMask.convexSet[i];
+                    var cx = UnityEngine.U2D.Common.UTess.ConvexHull2D.CheckCollisionSeparatingAxis(ref atlasMask.convex, atlasedSprite.y, atlasedSprite.z, ref testMask, 0, spriteMask.pointcount);
+                    if (cx)
+                        return true;
+                }
+
+                return false;
+            }
+
+#if DEBUGPIXEL
+            [BurstCompile]
+            internal static bool TestMask(ref AtlasMask atlasMask, ref Pixels spriteMask, int ax, int ay, int sx, int sy)
             {
                 var satlasPixel = atlasMask.pixels.data[ay * atlasMask.pixels.size.x + ax];
-                var spritePixel = spriteMask.pixels.data[sy * spriteMask.pixels.size.x + sx];
+                var spritePixel = spriteMask.data[sy * spriteMask.size.x + sx];
                 return (spritePixel > 0 && satlasPixel > 0);
             }
 
             [BurstCompile]
-            internal static bool TestMask(ref AtlasMask atlasMask, ref PixelMask spriteMask, int x, int y)
+            internal static bool TestMask(ref AtlasMask atlasMask, ref Pixels spriteMask, int x, int y)
             {
 
-                var spriteRect = spriteMask.pixels.rect;
+                var spriteRect = spriteMask.rect;
 
                 if (TestMask(ref atlasMask, ref spriteMask, (x), (y), spriteRect.x, spriteRect.y))
                     return false;
@@ -163,7 +257,7 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
             }
 
             [BurstCompile]
-            internal static void ApplyMask(ref UPackConfig cfg, ref AtlasMask atlasMask, ref PixelMask spriteMask, ref int4 rect, int x, int y)
+            internal static void ApplyMask(ref UPackConfig cfg, ref AtlasMask atlasMask, ref Pixels spriteMask, ref int4 rect, int x, int y)
             {
                 for (int j = rect.y, _j = 0; j < rect.w; ++j, ++_j)
                 {
@@ -171,8 +265,8 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                     {
                         var ax = _i + x;
                         var ay = _j + y;
-                        var pixel = spriteMask.pixels.data[j * spriteMask.pixels.size.x + i];
-                        if (pixel != 0)
+                        var pixel = spriteMask.data[j * spriteMask.size.x + i];
+                        if (pixel != 0 && ax < atlasMask.pixels.size.x && ay < atlasMask.pixels.size.y)
                         {
                             atlasMask.pixels.data[ay * atlasMask.pixels.size.x + ax] = pixel;
                             atlasMask.pixels.minmax.x = math.min(ax, atlasMask.pixels.minmax.x);
@@ -182,6 +276,38 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                         }
                     }
                 }
+            }
+#endif
+
+            [BurstCompile]
+            internal static unsafe void Pack(ref UPackConfig cfg, ref AtlasMask atlasMask, ref ConvexMask spriteMask, int x, int y)
+            {
+
+#if DEBUGPIXEL
+                /*
+                var fits = TestMask(ref atlasMask, ref spriteMask.pixels, x, y);
+                if (!fits)
+                {
+                    var testMask = new NativeArray<float2>(1024, Allocator.Temp);
+                    fits = TestOverlap(ref config, ref atlasMask, ref spriteMask, ref testMask, x, y);
+                    if (fits)
+                        Debug.LogWarning("overlap detected");
+                }
+                */
+                ApplyMask(ref cfg, ref atlasMask, ref spriteMask.pixels, ref spriteMask.pixels.rect, x, y);
+#endif
+
+                var offset = atlasMask.convexCount != 0 ? atlasMask.convexSet[atlasMask.convexCount - 1].z : 0;
+                for (int i = offset; i < offset + spriteMask.pointcount; ++i)
+                {
+                    atlasMask.convex[i] = new Vector2(spriteMask.convex[i - offset].x + x,spriteMask.convex[i - offset].y + y);
+                }
+                atlasMask.convexSet[atlasMask.convexCount] = new int3(atlasMask.convexCount++, offset, offset + spriteMask.pointcount);
+                atlasMask.area = atlasMask.area + spriteMask.area.z;
+                var sprite = new float2(x + (spriteMask.area.x / 2.0f), y + (spriteMask.area.y / 2.0f));
+                atlasMask.corner.x = atlasMask.corner.x > sprite.x ? atlasMask.corner.x : sprite.x;
+                atlasMask.corner.y = atlasMask.corner.y > sprite.y ? atlasMask.corner.y : sprite.y;
+                atlasMask.corner.z = (atlasMask.corner.x * atlasMask.corner.y) - atlasMask.area;
             }
 
             ////////////////////////////////////////////////////////////////
@@ -194,36 +320,36 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                 // Cfg
                 public UPackConfig config;
                 // Test Inc
-                public int4 atlasXInc;
-                // Test Inc.
-                public int4 atlasYInc;
+                public int2 fitOffset;
                 // Result Index.
                 public int resultIndex;
                 // AtlasMask
                 public AtlasMask atlasMask;
                 // SpriteMask
-                public PixelMask spriteMask;
+                public ConvexMask spriteMask;
+                // ResultSet
+                [NativeDisableContainerSafetyRestriction]
+                public NativeArray<float2> testMask;
                 // ResultSet
                 [NativeDisableContainerSafetyRestriction]
                 public NativeArray<int4> resultSet;
 
                 public void Execute()
                 {
-                    for (int y = atlasYInc.x; y <= atlasYInc.y; y += atlasYInc.z)
+                    for (int i = fitOffset.x; i < fitOffset.y; ++i)
                     {
-                        if (y + spriteMask.pixels.rect.w >= atlasMask.pixels.rect.y)
-                            break;
-
-                        for (int x = atlasXInc.x; x <= atlasXInc.y; x += atlasXInc.z)
+                        if (i >= atlasMask.fitCount)
                         {
-                            if (x + spriteMask.pixels.rect.z >= atlasMask.pixels.rect.x)
-                                continue;
+                            break;
+                        }
 
-                            if (TestMask(ref atlasMask, ref spriteMask, x, y))
-                            {
-                                resultSet[resultIndex] = new int4(x, y, 1, 0);
-                                return;
-                            }
+                        int x = (atlasMask.fitSet[i].x * config.bOffset);
+                        int y = (atlasMask.fitSet[i].y * config.bOffset);
+                        bool overlap = TestOverlap(ref config, ref atlasMask, ref spriteMask, ref testMask, x, y);
+                        if (!overlap)
+                        {
+                            resultSet[resultIndex] = new int4(x, y, 1, x * y);
+                            return;
                         }
                     }
                 }
@@ -233,45 +359,154 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
             // Best Fit.
             ////////////////////////////////////////////////////////////////
 
-            internal static unsafe bool BestFit(ref UPackConfig cfg, ref NativeArray<SpriteFitter> fitterJob, ref NativeArray<JobHandle> fitterJobHandles, ref NativeArray<int4> resultArray, ref AtlasMask atlasMask, ref PixelMask spriteMask, ref int4 output)
+            static void UpdateAtlasMaskRampStyle(ref UPackConfig cfg, ref AtlasMask atlasMask)
+            {
+                if ( atlasMask.fitSet.IsCreated )
+                    atlasMask.fitSet.Dispose();
+
+                int x = (atlasMask.pixels.rect.x / cfg.bOffset);
+                int y = (atlasMask.pixels.rect.y / cfg.bOffset);
+                int n = math.max( x, y ), m = n * n, i = 0;
+                atlasMask.fitSet = new NativeArray<int2>(m, Allocator.Persistent);
+
+                for (int j = 0; j < n; ++j)
+                {
+                    for (int k = 0, l = j; k <= j; ++k, --l)
+                    {
+                        if ( k * cfg.bOffset > atlasMask.pixels.rect.x || l * cfg.bOffset > atlasMask.pixels.rect.y )
+                            continue;
+                        atlasMask.fitSet[i++] = new int2(k, l);
+                    }
+                }
+                for (int j = 1; j < n; ++j)
+                {
+                    for (int k = j, l = n - 1; k < n; ++k, --l)
+                    {
+                        if ( k * cfg.bOffset > atlasMask.pixels.rect.x || l * cfg.bOffset > atlasMask.pixels.rect.y )
+                            continue;
+                        atlasMask.fitSet[i++] = new int2(k, l);
+                    }
+                }
+                atlasMask.fitCount = i;
+
+            }
+
+            static void UpdateAtlasMaskSquareStyle(ref UPackConfig cfg, ref AtlasMask atlasMask)
+            {
+                if ( atlasMask.fitSet.IsCreated )
+                    atlasMask.fitSet.Dispose();
+
+                int x = (atlasMask.pixels.rect.x / cfg.bOffset);
+                int y = (atlasMask.pixels.rect.y / cfg.bOffset);
+                int n = math.max( x, y ), m = n * n, i = 0;
+                atlasMask.fitSet = new NativeArray<int2>(m, Allocator.Persistent);
+
+                for (int j = 0; j < n; ++j)
+                {
+                    for (int k = 0; k <= j; ++k)
+                    {
+                        if ( k * cfg.bOffset > atlasMask.pixels.rect.x || j * cfg.bOffset > atlasMask.pixels.rect.y )
+                            continue;
+                        atlasMask.fitSet[i++] = new int2(k, j);
+                    }
+                    for (int k = (j-1); k >=0; --k)
+                    {
+                        if ( j * cfg.bOffset > atlasMask.pixels.rect.x || k * cfg.bOffset > atlasMask.pixels.rect.y )
+                            continue;
+                        atlasMask.fitSet[i++] = new int2(j, k);
+                    }
+                }
+                atlasMask.fitCount = i;
+
+            }
+
+            static void UpdateAtlasMaskFlipFlopStyle(ref UPackConfig cfg, ref AtlasMask atlasMask)
+            {
+                if ( atlasMask.fitSet.IsCreated )
+                    atlasMask.fitSet.Dispose();
+
+                int x = (atlasMask.pixels.rect.x / cfg.bOffset);
+                int y = (atlasMask.pixels.rect.y / cfg.bOffset);
+                int n = math.max( x, y ), m = n * n, i = 0;
+                atlasMask.fitSet = new NativeArray<int2>(m, Allocator.Persistent);
+
+                for (int j = 0; j < n; ++j)
+                {
+                    for (int k = 0; k < n; ++k)
+                    {
+                        if ( k * cfg.bOffset > atlasMask.pixels.rect.x || j * cfg.bOffset > atlasMask.pixels.rect.y )
+                            continue;
+                        atlasMask.fitSet[i++] = new int2(j, k);
+                    }
+                }
+                atlasMask.fitCount = i;
+
+            }
+
+            internal static void UpdateAtlasMask(ref UPackConfig cfg, ref AtlasMask atlasMask)
+            {
+                switch (cfg.style)
+                {
+                    case PackingStyle.Default:
+                        UpdateAtlasMaskFlipFlopStyle(ref cfg, ref atlasMask);
+                        break;
+                    case PackingStyle.Ramp:
+                        UpdateAtlasMaskRampStyle(ref cfg, ref atlasMask);
+                        break;
+                    case PackingStyle.Square:
+                        UpdateAtlasMaskSquareStyle(ref cfg, ref atlasMask);
+                        break;
+                }
+            }
+
+            internal static unsafe bool BestFit(ref UPackConfig cfg, ref NativeArray<SpriteFitter> fitterJob, ref NativeArray<JobHandle> fitterJobHandles, ref NativeArray<ScratchData> scratch, ref NativeArray<int4> resultArray, ref AtlasMask atlasMask, ref ConvexMask spriteMask, ref int4 output)
             {
                 bool more = true;
-                int inc = math.min(atlasMask.pixels.rect.x, atlasMask.pixels.rect.y), rx = -1, ry = -1;
+                int rx = -1, ry = -1;
                 for (int i = 0; i < cfg.jobSize; ++i)
                     fitterJobHandles[i] = default(JobHandle);
 
                 while (more)
                 {
 
-                    int index = 0;
+                    int index = 0, count = atlasMask.fitCount / JobsUtility.JobWorkerCount;
                     UnsafeUtility.MemClear(resultArray.GetUnsafePtr(), resultArray.Length * sizeof(int4));
 
                     // Small Search.
-                    for (int y = 0; (y < atlasMask.pixels.rect.y); y += inc)
+                    for (int i = 0; i < JobsUtility.JobWorkerCount; ++i)
                     {
-                        fitterJob[index] = new SpriteFitter() { config = cfg, atlasMask = atlasMask, spriteMask = spriteMask, atlasXInc = new int4(0, atlasMask.pixels.rect.x, atlasMask.pixels.rect.z, 0), atlasYInc = new int4(y, y + inc, atlasMask.pixels.rect.w, 0), resultSet = resultArray, resultIndex = index };
+                        fitterJob[index] = new SpriteFitter()
+                        {
+                            config = cfg,
+                            atlasMask = atlasMask,
+                            spriteMask = spriteMask,
+                            testMask = scratch[index].geom,
+                            fitOffset = new int2(i * count, (i * count) + count),
+                            resultSet = resultArray,
+                            resultIndex = index
+                        };
                         fitterJobHandles[index] = fitterJob[index].Schedule();
                         index++;
                     }
+
                     JobHandle.ScheduleBatchedJobs();
                     var jobHandle = JobHandle.CombineDependencies(fitterJobHandles);
                     jobHandle.Complete();
 
-                    int area = atlasMask.pixels.size.x * atlasMask.pixels.size.y;
                     for (int j = 0; j < index; ++j)
                     {
-                        if (resultArray[j].z == 1 && area > (resultArray[j].x * resultArray[j].y))
+                        if (resultArray[j].z == 1)
                         {
                             more = false;
                             rx = resultArray[j].x;
                             ry = resultArray[j].y;
-                            area = rx * ry;
+                            break;
                         }
                     }
 
                     if (false == more)
                     {
-                        ApplyMask(ref cfg, ref atlasMask, ref spriteMask, ref spriteMask.pixels.rect, rx, ry);
+                        Pack(ref cfg, ref atlasMask, ref spriteMask, rx, ry);
                         break;
                     }
 
@@ -282,15 +517,19 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                     }
                     else
                     {
-    #if SQUAREINCR
-                        atlasMask.rect.x = math.min(cfg.maxSize, atlasMask.rect.x * 2);
-                        atlasMask.rect.y = math.min(cfg.maxSize, atlasMask.rect.y * 2);
-    #else
-                        // Row Expansion first.
-                        bool incY = (atlasMask.pixels.rect.y < atlasMask.pixels.rect.x);
-                        atlasMask.pixels.rect.x = incY ? atlasMask.pixels.rect.x : math.min(cfg.maxSize, atlasMask.pixels.rect.x * 2);
-                        atlasMask.pixels.rect.y = incY ? math.min(cfg.maxSize, atlasMask.pixels.rect.y * 2) : atlasMask.pixels.rect.y;
-    #endif
+                        if (cfg.style != PackingStyle.Default)
+                        {
+                            atlasMask.pixels.rect.x = math.min(cfg.maxSize, atlasMask.pixels.rect.x * 2);
+                            atlasMask.pixels.rect.y = math.min(cfg.maxSize, atlasMask.pixels.rect.y * 2);
+                        }
+                        else
+                        {
+                            // Row Expansion first.
+                            bool incY = (atlasMask.pixels.rect.y <= atlasMask.pixels.rect.x);
+                            atlasMask.pixels.rect.x = incY ? atlasMask.pixels.rect.x : math.min(cfg.maxSize, atlasMask.pixels.rect.x * 2);
+                            atlasMask.pixels.rect.y = incY ? math.min(cfg.maxSize, atlasMask.pixels.rect.y * 2) : atlasMask.pixels.rect.y;
+                        }
+                        GeometryPack.UPack.UpdateAtlasMask(ref cfg, ref atlasMask);
                     }
                 }
 
@@ -300,12 +539,18 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
             }
 
         }
-
     }
 
-    internal class SpriteAtlasScriptablePacker : UnityEditor.U2D.ScriptablePacker
+    internal class SpriteAtlasGeometryPacker : UnityEditor.U2D.ScriptablePacker
     {
-        static unsafe bool PrepareInput(DefaultPack.UPackConfig cfg, int2 spriteSize, PackerData input)
+
+        [SerializeField]
+        GeometryPack.PackingStyle m_PackingStyle = GeometryPack.PackingStyle.Default;
+
+        [SerializeField]
+        GeometryPack.PackingQuality m_Quality = GeometryPack.PackingQuality.Default;
+
+        static unsafe bool PrepareInput(GeometryPack.UPackConfig cfg, int2 spriteSize, PackerData input)
         {
 
             for (int i = 0; i < input.spriteData.Length; ++i)
@@ -344,14 +589,6 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                     }
                     outputCoordY++;
                 }
-
-                {
-                    Texture2D t = new Texture2D(cfg.maxSize, cfg.maxSize, UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_SRGB, 0);
-                    t.SetPixelData<Color32>(atlasTexture, 0);
-                    byte[] _bytes = UnityEngine.ImageConversion.EncodeToPNG(t);
-                    System.IO.File.WriteAllBytes(Path.Combine(Application.dataPath, "../") + "Temp/" + "Input" + i + ".png", _bytes);
-                }
-
                 atlasTexture.Dispose();
 #endif
 
@@ -363,16 +600,16 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
 
         internal bool Process(SpriteAtlasPackingSettings config, SpriteAtlasTextureSettings setting, PackerData input, bool packAtlas)
         {
-            var cfg = new DefaultPack.UPackConfig();
-            var quality = 3;
+
+            var cfg = new GeometryPack.UPackConfig();
             var startRect = 64;
 
+            cfg.packing = (int)m_Quality + 2;
             cfg.padding = config.padding;
-            cfg.bOffset = config.blockOffset * (1 << (int)quality);
+            cfg.bOffset = config.blockOffset * (1 << cfg.packing);
             cfg.maxSize = setting.maxTextureSize;
             cfg.rotates = config.enableRotation ? 1 : 0;
-            cfg.packing = config.enableTightPacking ? 1 : 0;
-            cfg.freeBox = cfg.bOffset;
+            cfg.style = m_PackingStyle;
             cfg.jobSize = 1024;
             cfg.sprSize = setting.maxTextureSize;
 
@@ -385,27 +622,40 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
             var validAtlas = false;
 
             // Rasterization.
-            NativeArray<DefaultPack.AtlasMask> atlasMasks = new NativeArray<DefaultPack.AtlasMask>(spriteCount, Allocator.Persistent, NativeArrayOptions.ClearMemory);
-            NativeArray<DefaultPack.PixelMask> spriteMasks = new NativeArray<DefaultPack.PixelMask>(spriteBatch, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            var atlasMasks = new NativeArray<GeometryPack.AtlasMask>(spriteCount, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            var spriteMasks = new NativeArray<GeometryPack.ConvexMask>(spriteBatch, Allocator.Persistent, NativeArrayOptions.ClearMemory);
             var rasterJobHandles = new NativeArray<JobHandle>(spriteBatch, Allocator.Persistent);
-            var rasterJob = new NativeArray<DefaultPack.UPack.SpriteRaster>(spriteBatch, Allocator.Persistent);
+            var rasterJob = new NativeArray<GeometryPack.UPack.SpriteRaster>(spriteBatch, Allocator.Persistent);
 
             // PolygonFitting
             var fitterJobHandles = new NativeArray<JobHandle>(cfg.jobSize, Allocator.Persistent);
-            var fitterJob = new NativeArray<DefaultPack.UPack.SpriteFitter>(cfg.jobSize, Allocator.Persistent);
+            var fitterJob = new NativeArray<GeometryPack.UPack.SpriteFitter>(cfg.jobSize, Allocator.Persistent);
             var fitterResult = new NativeArray<int4>(cfg.jobSize, Allocator.Persistent);
+            var scratch = new NativeArray<GeometryPack.ScratchData>(cfg.jobSize, Allocator.Persistent, NativeArrayOptions.ClearMemory);
             var random = new Unity.Mathematics.Random(0x6E624EB7u);
 
             // Initialize Batch Sprite Masks.
             for (int i = 0; i < spriteBatch; ++i)
             {
                 // Pixel
-                DefaultPack.PixelMask spriteMask = new DefaultPack.PixelMask();
+                GeometryPack.ConvexMask spriteMask = new GeometryPack.ConvexMask();
+                spriteMask.convex = new NativeArray<float2>(65535, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+                spriteMask.pointcount = 0;
                 spriteMask.pixels.size = spriteSize;
                 spriteMask.pixels.rect = int4.zero;
                 spriteMask.pixels.minmax = new int4(spriteSize.x, spriteSize.y, 0, 0);
+#if DEBUGPIXEL
                 spriteMask.pixels.data = new NativeArray<byte>(spriteSize.x * spriteSize.y, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+#endif
                 spriteMasks[i] = spriteMask;
+            }
+
+            // Temp Masks
+            for (int i = 0; i < cfg.jobSize; ++i)
+            {
+                GeometryPack.ScratchData scratchData = new GeometryPack.ScratchData();
+                scratchData.geom = new NativeArray<float2>(65535, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+                scratch[i] = scratchData;
             }
 
             unsafe
@@ -437,7 +687,7 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
 
                         unsafe
                         {
-                            rasterJob[index] = new DefaultPack.UPack.SpriteRaster()
+                            rasterJob[index] = new GeometryPack.UPack.SpriteRaster()
                             {
                                 cfg = cfg,
                                 vertices = (Vector2*)NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(input.vertexData) + inputSprite.vertexOffset,
@@ -448,7 +698,9 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                                 vertexCount = inputSprite.vertexCount,
                                 indexCount = inputSprite.indexCount,
                                 spriteMasks = spriteMasks,
+#if DEBUGPIXEL
                                 pixels = (Color32*)NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(input.colorData) + textureData.bufferOffset
+#endif
                             };
                         }
                         rasterJobHandles[index] = rasterJob[index].Schedule();
@@ -470,10 +722,10 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                         int page = -1;
                         validAtlas = false;
                         var result = int4.zero;
-                        for (int i = (atlasCount - 1); i >= 0 && false == validAtlas; --i)
+                        for (int i = 0; i < atlasCount && false == validAtlas; ++i)
                         {
                             var atlasMask = atlasMasks[i];
-                            validAtlas = DefaultPack.UPack.BestFit(ref cfg, ref fitterJob, ref fitterJobHandles, ref fitterResult, ref atlasMask, ref spriteMask, ref result);
+                            validAtlas = GeometryPack.UPack.BestFit(ref cfg, ref fitterJob, ref fitterJobHandles, ref scratch, ref fitterResult, ref atlasMask, ref spriteMask, ref result);
                             if (validAtlas)
                             {
                                 atlasMasks[i] = atlasMask;
@@ -485,12 +737,19 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                         if (!validAtlas)
                         {
                             page = atlasCount;
-                            DefaultPack.AtlasMask atlasMask = new DefaultPack.AtlasMask();
+                            GeometryPack.AtlasMask atlasMask = new GeometryPack.AtlasMask();
+#if DEBUGPIXEL
                             atlasMask.pixels.data = new NativeArray<byte>(cfg.maxSize * cfg.maxSize, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+#endif
+                            atlasMask.convex = new NativeArray<float2>(1024 * spriteCount, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+                            atlasMask.convexSet = new NativeArray<int3>(spriteCount, Allocator.Persistent, NativeArrayOptions.ClearMemory);
                             atlasMask.pixels.size = new int2(cfg.maxSize, cfg.maxSize);
                             atlasMask.pixels.rect.x = atlasMask.pixels.rect.y = startRect;
                             atlasMask.pixels.rect.z = atlasMask.pixels.rect.w = cfg.bOffset;
-                            validAtlas = DefaultPack.UPack.BestFit(ref cfg, ref fitterJob, ref fitterJobHandles, ref fitterResult, ref atlasMask, ref spriteMask, ref result);
+                            atlasMask.corner = float3.zero;
+                            GeometryPack.UPack.UpdateAtlasMask(ref cfg, ref atlasMask);
+
+                            validAtlas = GeometryPack.UPack.BestFit(ref cfg, ref fitterJob, ref fitterJobHandles, ref scratch, ref fitterResult, ref atlasMask, ref spriteMask, ref result);
                             atlasMasks[atlasCount] = atlasMask;
                             atlasCount++;
                         }
@@ -502,8 +761,6 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
 
                         // Clear Mem of SpriteMask.
 #if DEBUGPIXEL
-                        if (packAtlas)
-                            UnityEngine.U2D.Common.URaster.RasterUtils.SaveImage(spriteMask.pixels.data, cfg.maxSize, cfg.maxSize, Path.Combine(Application.dataPath, "../") + "Temp/" + "Input" + sprite + ".png");
                         UnsafeUtility.MemClear(spriteMask.pixels.data.GetUnsafePtr(), ((spriteMask.pixels.rect.w * spriteMask.pixels.size.x) + spriteMask.pixels.rect.z) * UnsafeUtility.SizeOf<Color32>());
 #endif
 
@@ -527,7 +784,22 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                     for (int j = 0; j < atlasCount; ++j)
                     {
                         var atlasMask = atlasMasks[j];
-                        UnityEngine.U2D.Common.URaster.RasterUtils.SaveImage(atlasMask.pixels.data, cfg.maxSize, cfg.maxSize, Path.Combine(Application.dataPath, "../") + "Temp/" + "Packer" + j + ".png");
+
+                        for (int a = 0; a < atlasMask.convexCount; ++a)
+                        {
+                            for (int b = a; b < atlasMask.convexCount; ++b)
+                            {
+                                {
+                                    var ca = atlasMask.convexSet[a];
+                                    var cb = atlasMask.convexSet[b];
+                                    var cx = UnityEngine.U2D.Common.UTess.ConvexHull2D.CheckCollisionSeparatingAxis(ref atlasMask.convex, ca.y, ca.z, ref atlasMask.convex, cb.y, cb.z);
+                                    if ((a == b && !cx) || (a != b && cx))
+                                        Debug.LogWarning("validation failed => " + a + " : " + b + " | " + ca + " : " + cb);
+                                }
+                            }
+                        }
+
+                        UnityEngine.U2D.Common.URaster.RasterUtils.SaveImage(atlasMask.pixels.data, cfg.maxSize, cfg.maxSize, Path.Combine(Application.dataPath, "../") + "Temp/" + "Packer" + j + "-" + cfg.padding + ".png");
                     }
 #endif
                 }
@@ -545,12 +817,19 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                     Debug.LogError("Falling Back to Builtin Packing. Please check Input Sprites that may have higher size than the Max Texture Size of Atlas");
                 }
 
+                for (int j = 0; j < scratch.Length; ++j )
+                    scratch[j].geom.Dispose();
+                for (int j = 0; j < atlasMasks.Length; ++j)
+                    atlasMasks[j].fitSet.Dispose();
+#if DEBUGPIXEL
                 for (int j = 0; j < spriteMasks.Length; ++j)
                     spriteMasks[j].pixels.data.Dispose();
                 for (int j = 0; j < atlasMasks.Length; ++j)
                     atlasMasks[j].pixels.data.Dispose();
+#endif
             }
 
+            scratch.Dispose();
             atlasMasks.Dispose();
             spriteMasks.Dispose();
 

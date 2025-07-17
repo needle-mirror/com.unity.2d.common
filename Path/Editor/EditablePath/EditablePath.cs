@@ -28,7 +28,7 @@ namespace UnityEditor.U2D.Common.Path
         }
 
         public IUndoObject undoObject { get; set; }
-        
+
         public Matrix4x4 localToWorldMatrix
         {
             get { return m_LocalToWorldMatrix; }
@@ -68,7 +68,7 @@ namespace UnityEditor.U2D.Common.Path
             {
                 if (pointCount < 3)
                     return true;
-                
+
                 return m_IsOpenEnded;
             }
             set { m_IsOpenEnded = value; }
@@ -87,8 +87,8 @@ namespace UnityEditor.U2D.Common.Path
         public ControlPoint GetPointLocal(int index)
         {
             return m_ControlPoints[index];
-        }        
-        
+        }
+
         public ControlPoint GetPoint(int index)
         {
             return TransformPoint(localToWorldMatrix, m_ControlPoints[index]);
@@ -118,7 +118,7 @@ namespace UnityEditor.U2D.Common.Path
         {
             m_ControlPoints.Clear();
         }
-        
+
         private ControlPoint TransformPoint(Matrix4x4 transformMatrix, ControlPoint controlPoint)
         {
             if (transformMatrix == Matrix4x4.identity)
