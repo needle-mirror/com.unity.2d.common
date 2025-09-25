@@ -124,7 +124,6 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
             // Atlas Packing.
             ////////////////////////////////////////////////////////////////
 
-            [BurstCompile]
             internal static bool TestMask(ref AtlasMask atlasMask, ref PixelMask spriteMask, int ax, int ay, int sx, int sy)
             {
                 var satlasPixel = atlasMask.pixels.data[ay * atlasMask.pixels.size.x + ax];
@@ -132,7 +131,6 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                 return (spritePixel > 0 && satlasPixel > 0);
             }
 
-            [BurstCompile]
             internal static bool TestMask(ref AtlasMask atlasMask, ref PixelMask spriteMask, int x, int y)
             {
 

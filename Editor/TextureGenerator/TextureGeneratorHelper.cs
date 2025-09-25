@@ -257,6 +257,14 @@ namespace UnityEditor.U2D.Common
             get { return m_Filter; }
             set { m_Filter = value; }
         }
+        
+        [SerializeField]
+        float m_Bias;
+        public float bias
+        {
+            get { return m_Bias; }
+            set { m_Bias = value; }
+        }          
 
         [SerializeField]
         bool m_BorderMipmap;
@@ -324,9 +332,10 @@ namespace UnityEditor.U2D.Common
             fadeDistanceEnd = 3;
         }
 
-        public TextureMipmapSettings(TextureImporterMipFilter filter, bool borderMipmap, bool fadeout, bool preserveCoverage, int fadeDistanceStart, int fadeDistanceEnd, bool streamingMipmaps, int streamingMipmapsPriority)
+        public TextureMipmapSettings(TextureImporterMipFilter filter, float bias, bool borderMipmap, bool fadeout, bool preserveCoverage, int fadeDistanceStart, int fadeDistanceEnd, bool streamingMipmaps, int streamingMipmapsPriority)
         {
             this.filter = filter;
+            this.bias = bias;
             this.borderMipmap = borderMipmap;
             this.fadeout = fadeout;
             this.preserveCoverage = preserveCoverage;
@@ -340,6 +349,7 @@ namespace UnityEditor.U2D.Common
         {
             settings.textureImporterSettings.mipmapEnabled = true;
             settings.textureImporterSettings.mipmapFilter = filter;
+            settings.textureImporterSettings.mipmapBias = bias;
             settings.textureImporterSettings.borderMipmap = borderMipmap;
             settings.textureImporterSettings.fadeOut = fadeout;
             settings.textureImporterSettings.mipmapFadeDistanceStart = fadeDistanceStart;
@@ -603,6 +613,7 @@ namespace UnityEditor.U2D.Common
                 return null;
 
             var ts = new TextureMipmapSettings();
+            ts.bias = settings.mipmapBias;
             ts.filter = settings.mipmapFilter;
             ts.borderMipmap = settings.borderMipmap;
             ts.fadeout = settings.fadeOut;

@@ -242,7 +242,7 @@ namespace UnityEngine.U2D.Common.UTess
         }
 
         // Convex HUll Generator.
-        public static unsafe float3 Generate(ref NativeArray<float2> result, ref int pointCount, int seed, Vector2* vertexInput, int vertexCount, float extrude)
+        public static unsafe float3 Generate(ref NativeArray<float2> result, ref float4 aabb, ref int pointCount, int seed, Vector2* vertexInput, int vertexCount, float extrude)
         {
 
             float2* vertices = (float2*)vertexInput;
@@ -283,7 +283,7 @@ namespace UnityEngine.U2D.Common.UTess
             if (rpCount != 0)
                 Generate(ref output, ref outputCount, ref rp, rpCount, rightMost, leftMost);
 
-            if (outputCount > 3)
+            if (outputCount >= 3)
             {
                 // Output. First two points are the pivot points.
                 var sortedData = new NativeArray<float3>(outputCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
@@ -352,13 +352,29 @@ namespace UnityEngine.U2D.Common.UTess
                 area.y = topMost.y - bottomMost.y;
                 center = new float2(center.x - lx, center.y - ly);
 
+                float minx = 9999999.0f, miny = 9999999.0f;
+                float maxx = -9999999.0f, maxy = -9999999.0f;
+
                 for (int i = 0; i < pointCount; ++i)
                 {
                     var cx = new float2((int)math.floor(convex[i].x - lx), (int)math.floor(convex[i].y - ly));
                     convex[i] = cx;
+                    minx = (cx.x < minx) ? cx.x : minx;
+                    maxx = (cx.x > maxx) ? cx.x : maxx;
+                    miny = (cx.y < miny) ? cx.y : miny;
+                    maxy = (cx.y > maxy) ? cx.y : maxy;
+
                     if (i != 0)
                         area.z += UnityEngine.U2D.Common.UTess.ModuleHandle.TriangleArea(convex[i], center, convex[i - 1]);
                 }
+
+                // Set the Center and Width/Height
+                aabb.z = (maxx - minx / 2.0f);
+                aabb.w = (maxy - miny / 2.0f);
+                aabb.x = minx + aabb.z;
+                aabb.y = miny + aabb.w;
+
+
                 // Dispose.
                 sortedData.Dispose();
             }

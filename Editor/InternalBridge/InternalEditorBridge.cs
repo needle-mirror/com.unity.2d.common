@@ -79,11 +79,7 @@ namespace UnityEditor.U2D.Common
             }
         }
 
-#if UNITY_2023_3_OR_NEWER
         public class ShortcutContext : IShortcutContext
-#else
-        public class ShortcutContext : IShortcutToolContext
-#endif
         {
             public Func<bool> isActive;
             public bool active
@@ -201,6 +197,11 @@ namespace UnityEditor.U2D.Common
         public static void ClearAssetPreviews(int clientId)
         {
             AssetPreview.DeletePreviewTextureManagerByID(clientId);
+        }
+
+        public static long GetTextureStorageMemorySizeLong(Texture2D t)
+        {
+            return TextureUtil.GetStorageMemorySizeLong(t);
         }
     }
 

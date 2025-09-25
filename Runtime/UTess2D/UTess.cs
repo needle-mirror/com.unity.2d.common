@@ -553,6 +553,14 @@ namespace UnityEngine.U2D.Common.UTess
             }
         }
 
+        struct Int3Compare : IComparer<int3>
+        {
+            public int Compare(int3 a, int3 b)
+            {
+                return (a.x < b.x) ? -1 : ((a.x > b.x) ? 1 : 0);
+            }
+        }
+
         /// <summary>
         /// The idea here is to:
         /// 1. Sort the Triangle Indices based on connected Edges (Direction Independent). Helps Step 2.
@@ -578,7 +586,7 @@ namespace UnityEngine.U2D.Common.UTess
                     GetIntermediate(input_[i + 1], input_[i + 2], ref sorted_[i + 1]);
                     GetIntermediate(input_[i + 2], input_[i + 0], ref sorted_[i + 2]);
                 }
-                RawSort(sorted_, inputLength - 1);
+                NativeSortExtension.Sort(sorted_, inputLength, new Int3Compare());
 
                 for (int i = 0; i < inputLength; ++i)
                 {

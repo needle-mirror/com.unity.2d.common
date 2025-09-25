@@ -53,6 +53,7 @@ namespace UnityEditor.U2D.Common
         /// <param name="outPackedBufferHeight">Packed image buffer's height</param>
         /// <param name="outPackedRect">Location of each image buffers in the packed buffer</param>
         /// <param name="outUVTransform">Translation data from image original buffer to packed buffer</param>
+        /// <param name="requireSquarePOT">If true, the final texture will be power of two with equally sized sides</param>
         public static void Pack(NativeArray<Color32>[] buffers, int[] width, int[] height, int padding, uint spriteSizeExpand, out NativeArray<Color32> outPackedBuffer, out int outPackedBufferWidth, out int outPackedBufferHeight, out RectInt[] outPackedRect, out Vector2Int[] outUVTransform, bool requireSquarePOT = false)
         {
             UnityEngine.Profiling.Profiler.BeginSample("Pack");
@@ -72,7 +73,7 @@ namespace UnityEditor.U2D.Common
                 Pack(tightRectArea, padding, out outPackedRect, out outPackedBufferWidth, out outPackedBufferHeight, requireSquarePOT);
                 var packBufferSize = (ulong)outPackedBufferWidth * (ulong)outPackedBufferHeight;
 
-                if (packBufferSize < 0 || packBufferSize >= int.MaxValue)
+                if (packBufferSize >= int.MaxValue)
                 {
                     throw new ArgumentException("Unable to create pack texture. Image size is too big to pack.");
                 }

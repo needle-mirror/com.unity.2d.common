@@ -1,6 +1,7 @@
 {
     "name": "Unity.2D.Common.EditorTests",
     "references": [
+      "Unity.Burst"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

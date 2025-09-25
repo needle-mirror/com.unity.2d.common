@@ -65,6 +65,8 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
             internal int pointcount;
             // Area & Size
             internal float3 area;
+            // Center and Size
+            internal float4 aabb;
             // Convexified Polygon Data.
             [NativeDisableContainerSafetyRestriction]
             internal NativeArray<float2> convex;
@@ -89,6 +91,8 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
             // Convexified Polygon DataSet.
             [NativeDisableContainerSafetyRestriction]
             internal NativeArray<int3> convexSet;
+            [NativeDisableContainerSafetyRestriction]
+            internal NativeArray<float4> aabb;
             // Convexified Polygon Data.
             [NativeDisableContainerSafetyRestriction]
             internal NativeArray<float2> convex;
@@ -160,7 +164,7 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                     spriteMask.pointcount = 0;
 
                     // Generate Convex Hull.
-                    spriteMask.area = UnityEngine.U2D.Common.UTess.ConvexHull2D.Generate(ref spriteMask.convex, ref spriteMask.pointcount, seed, vertices, vertexCount, cfg.padding * 0.25f);
+                    spriteMask.area = UnityEngine.U2D.Common.UTess.ConvexHull2D.Generate(ref spriteMask.convex, ref spriteMask.aabb, ref spriteMask.pointcount, seed, vertices, vertexCount, cfg.padding * 0.25f);
                     spriteMasks[index] = spriteMask;
 
                 }
@@ -170,7 +174,6 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
             // Atlas Packing.
             ////////////////////////////////////////////////////////////////
 
-            [BurstCompile]
             internal static bool TestOverlap(ref UPackConfig cfg, ref AtlasMask atlasMask, ref ConvexMask spriteMask, ref NativeArray<float2> testMask, int x, int y)
             {
 
@@ -205,9 +208,20 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                     }
                 }
 
+                var aabbSprite = spriteMask.aabb;
+                aabbSprite.x = x;
+                aabbSprite.y = y;
+
                 // Test Collision
                 for (int i = 0; i < atlasMask.convexCount; ++i)
                 {
+                    var atlasSpriteaabb = atlasMask.aabb[i];
+
+                    var distx = math.abs(aabbSprite.x - atlasSpriteaabb.x);
+                    var disty = math.abs(aabbSprite.y - atlasSpriteaabb.y);
+                    if (distx > aabbSprite.z + atlasSpriteaabb.z && disty > aabbSprite.w + atlasSpriteaabb.w)
+                        continue;
+
                     var atlasedSprite = atlasMask.convexSet[i];
                     var cx = UnityEngine.U2D.Common.UTess.ConvexHull2D.CheckCollisionSeparatingAxis(ref atlasMask.convex, atlasedSprite.y, atlasedSprite.z, ref testMask, 0, spriteMask.pointcount);
                     if (cx)
@@ -302,6 +316,7 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                 {
                     atlasMask.convex[i] = new Vector2(spriteMask.convex[i - offset].x + x,spriteMask.convex[i - offset].y + y);
                 }
+                atlasMask.aabb[atlasMask.convexCount] = new float4(x + spriteMask.aabb.z, y + spriteMask.aabb.w, spriteMask.aabb.z, spriteMask.aabb.w);
                 atlasMask.convexSet[atlasMask.convexCount] = new int3(atlasMask.convexCount++, offset, offset + spriteMask.pointcount);
                 atlasMask.area = atlasMask.area + spriteMask.area.z;
                 var sprite = new float2(x + (spriteMask.area.x / 2.0f), y + (spriteMask.area.y / 2.0f));
@@ -743,6 +758,7 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
 #endif
                             atlasMask.convex = new NativeArray<float2>(1024 * spriteCount, Allocator.Persistent, NativeArrayOptions.ClearMemory);
                             atlasMask.convexSet = new NativeArray<int3>(spriteCount, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+                            atlasMask.aabb = new NativeArray<float4>(spriteCount, Allocator.Persistent, NativeArrayOptions.ClearMemory);
                             atlasMask.pixels.size = new int2(cfg.maxSize, cfg.maxSize);
                             atlasMask.pixels.rect.x = atlasMask.pixels.rect.y = startRect;
                             atlasMask.pixels.rect.z = atlasMask.pixels.rect.w = cfg.bOffset;
@@ -817,10 +833,24 @@ namespace UnityEditor.U2D.Common.SpriteAtlasPacker
                     Debug.LogError("Falling Back to Builtin Packing. Please check Input Sprites that may have higher size than the Max Texture Size of Atlas");
                 }
 
-                for (int j = 0; j < scratch.Length; ++j )
+                for (int j = 0; j < scratch.Length; ++j)
+                {
                     scratch[j].geom.Dispose();
+                }
+
+                for (int j = 0; j < spriteMasks.Length; ++j)
+                {
+                    spriteMasks[j].convex.Dispose();
+                }
+
                 for (int j = 0; j < atlasMasks.Length; ++j)
+                {
+                    atlasMasks[j].aabb.Dispose();
+                    atlasMasks[j].convex.Dispose();
                     atlasMasks[j].fitSet.Dispose();
+                    atlasMasks[j].convexSet.Dispose();
+                }
+
 #if DEBUGPIXEL
                 for (int j = 0; j < spriteMasks.Length; ++j)
                     spriteMasks[j].pixels.data.Dispose();

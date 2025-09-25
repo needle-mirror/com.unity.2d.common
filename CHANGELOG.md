@@ -1,10 +1,14 @@
 # Changelog
 
+## [12.0.1] - 2025-09-25
+### Added
+- Added internal access for the Aseprite Importer.
+- Added retrieving of texture storage size.
+
 ## [12.0.0] - 2025-07-17
 ### Changed
 - Update minimum Unity version.
 - Improved outline generation.
-
 
 ## [11.0.1] - 2025-05-16
 ### Changed
