@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Unity.Collections;
 using Unity.Mathematics;
 using System.Collections.Generic;
@@ -852,6 +852,12 @@ namespace UnityEngine.U2D.Common.UTess
                 Reorder(startVertexCount,i, ref indices, ref indexCount, ref vertices, ref vertexCount);
             }
 
+        }
+
+        public static bool TessellateMainThread(Allocator allocator, ref NativeArray<float2> points, ref NativeArray<int2> edges, out NativeArray<float2> outVertices, out NativeArray<int> outIndices)
+        {
+            // For Main-Thread only and also this only allocates minimal memory.
+            return Tessellator.TessellateMainThread(allocator, ref points, ref edges, out outVertices, out outIndices);
         }
 
         public static float4 ConvexQuad(Allocator allocator, NativeArray<float2> points, NativeArray<int2> edges, ref NativeArray<float2> outVertices, ref int outVertexCount, ref NativeArray<int> outIndices, ref int outIndexCount, ref NativeArray<int2> outEdges, ref int outEdgeCount)

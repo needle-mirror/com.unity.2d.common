@@ -1,6 +1,7 @@
 {
     "name": "Unity.2D.Common.Runtime",
     "references": [
+        "Unity.Burst",
         "Unity.Mathematics",
         "Unity.Collections"
     ],

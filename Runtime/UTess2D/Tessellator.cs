@@ -1,8 +1,7 @@
-﻿using System;
-using Unity.Profiling;
+using System;
 using Unity.Collections;
-using Unity.Mathematics;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Mathematics;
 
 namespace UnityEngine.U2D.Common.UTess
 {
@@ -887,6 +886,54 @@ namespace UnityEngine.U2D.Common.UTess
                 for (var i = 0; i < maxCount; ++i)
                     outputVertices[vertexCount++] = pgPoints[i];
                 cells.Dispose();
+            }
+
+            tess.Cleanup();
+            return valid;
+        }
+
+        internal static bool TessellateMainThread(Allocator allocator, ref NativeArray<float2> pgPoints, ref NativeArray<int2> pgEdges, out NativeArray<float2> outputVertices, out NativeArray<int> outputIndices)
+        {
+            // Process.
+            Tessellator tess = new Tessellator();
+            tess.SetAllocator(allocator);
+            int maxCount = 0, triCount = 0, indexCount = 0;
+            var valid = true;
+
+            valid = tess.Triangulate(pgPoints, pgPoints.Length, pgEdges, pgEdges.Length);
+            valid = valid && tess.ApplyDelaunay(pgPoints, pgEdges);
+
+            if (valid)
+            {
+                // Output.
+                NativeArray<int3> cells = tess.RemoveExterior(ref triCount);
+                NativeArray<int> intermediate = new NativeArray<int>(triCount * 3, allocator);
+                for (var i = 0; i < triCount; ++i)
+                {
+                    var a = (UInt16)cells[i].x;
+                    var b = (UInt16)cells[i].y;
+                    var c = (UInt16)cells[i].z;
+                    if (a != b && b != c && a != c)
+                    {
+                        intermediate[indexCount++] = a;
+                        intermediate[indexCount++] = c;
+                        intermediate[indexCount++] = b;
+                    }
+                    maxCount = math.max(math.max(math.max(cells[i].x, cells[i].y), cells[i].z), maxCount);
+                }
+                maxCount = (maxCount != 0) ? (maxCount + 1) : 0;
+
+                outputIndices = new NativeArray<int>(indexCount, allocator);
+                outputVertices = new NativeArray<float2>(maxCount, allocator);
+
+                NativeArray<int>.Copy(intermediate, 0, outputIndices, 0, indexCount);
+                NativeArray<float2>.Copy(pgPoints, 0, outputVertices, 0, maxCount);
+                cells.Dispose();
+            }
+            else
+            {
+                outputIndices = new NativeArray<int>(1, allocator);
+                outputVertices = new NativeArray<float2>(1, allocator);
             }
 
             tess.Cleanup();

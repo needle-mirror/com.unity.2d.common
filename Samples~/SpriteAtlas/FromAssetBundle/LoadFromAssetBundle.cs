@@ -5,16 +5,18 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.U2D;
 
-public class LoadFromAssetBundle : MonoBehaviour
+namespace UnityEngine.U2D.Common.Samples
 {
-    List<string> tags = new List<string>();
-
-    void Awake()
+    public class LoadFromAssetBundle : MonoBehaviour
     {
+        List<string> tags = new List<string>();
+
+        void Awake()
+        {
 #if !ENABLE_WEB_REQUEST_ASSET_BUNDLE
-        Debug.Log("Please enable UnityWebRequestAssetBundle Module from PackageManager");
+            Debug.Log("Please enable UnityWebRequestAssetBundle Module from PackageManager");
 #endif
-    }
+        }
 
 #if ENABLE_WEB_REQUEST_ASSET_BUNDLE
     void OnEnable()
@@ -45,13 +47,15 @@ public class LoadFromAssetBundle : MonoBehaviour
         UnityWebRequest loadOp;
         if (Application.platform == RuntimePlatform.Android)
         {
-            loadOp = UnityWebRequestAssetBundle.GetAssetBundle(Application.streamingAssetsPath + "/" + assetbundleToLoad);
+            loadOp =
+ UnityWebRequestAssetBundle.GetAssetBundle(Application.streamingAssetsPath + "/" + assetbundleToLoad);
         }
         else
         {
-            loadOp = UnityWebRequestAssetBundle.GetAssetBundle("file://" + Application.streamingAssetsPath + "/" + assetbundleToLoad);
+            loadOp =
+ UnityWebRequestAssetBundle.GetAssetBundle("file://" + Application.streamingAssetsPath + "/" + assetbundleToLoad);
         }
-        
+
         yield return loadOp.SendWebRequest();
 
         if (loadOp.result != UnityWebRequest.Result.Success)
@@ -75,4 +79,6 @@ public class LoadFromAssetBundle : MonoBehaviour
         Debug.LogFormat("Registered {0}.", spriteAtlas.name);
     }
 #endif
+    }
+
 }

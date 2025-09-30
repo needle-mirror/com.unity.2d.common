@@ -1,5 +1,10 @@
 # Changelog
 
+## [13.0.0] - 2025-09-30
+### Changed
+- Update Unity min version for package.
+- Moved internal TriangulationUtility functions to Common.
+
 ## [12.0.1] - 2025-09-25
 ### Added
 - Added internal access for the Aseprite Importer.

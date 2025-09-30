@@ -4,3 +4,6 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.2D.Common.Tests.EditorTests")]
 [assembly: InternalsVisibleTo("Unity.2D.Animation.Editor")]
 [assembly: InternalsVisibleTo("Unity.2D.Animation.Runtime")]
+[assembly: InternalsVisibleTo("Unity.2D.Animation.Tests.EditorTests")]
+[assembly: InternalsVisibleTo("Unity.2D.Triangulation.Runtime")]
+[assembly: InternalsVisibleTo("Unity.RenderPipelines.Universal.2D.Runtime")]

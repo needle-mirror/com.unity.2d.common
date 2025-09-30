@@ -1,12 +1,16 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.U2D;
+using System.Collections.Generic;
 
 namespace UnityEngine.U2D.Common.Samples
 {
-    public class LoadFromResourceVariant : MonoBehaviour
+    public class LateBoundRuntimeSpriteAtlas : MonoBehaviour
     {
+
+        // List of Sprites to be packed in Runtime.
+        public List<Sprite> m_RuntimeAtlasedSprites = new List<Sprite>();
+        public float multiplier = 1;
+
         void OnEnable()
         {
             SpriteAtlasManager.atlasRequested += RequestLateBindingAtlas;
@@ -21,10 +25,12 @@ namespace UnityEngine.U2D.Common.Samples
 
         void RequestLateBindingAtlas(string tag, System.Action<SpriteAtlas> callback)
         {
-            if (tag == "ResourceAtlas2")
+            if (tag == "LateBoundRuntime")
             {
-                var sa = UnityEngine.Resources.Load<SpriteAtlas>("ResourceAtlasVariant2");
+                var sa = UnityEngine.Resources.Load<SpriteAtlas>("LateBoundRuntime");
                 callback(sa);
+                SpriteAtlasCommon.CreateSpriteAtlasAtRuntimeDemo("SimpleLateBoundRuntimeAtlasSample",
+                    m_RuntimeAtlasedSprites.ToArray(), TextureFormat.RGBA32, 1024, 1024, multiplier);
             }
             else
                 Debug.Log("Error: Late binding callback with wrong atlas tag of " + tag);
