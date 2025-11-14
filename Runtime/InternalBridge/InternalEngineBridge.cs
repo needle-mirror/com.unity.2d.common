@@ -46,9 +46,9 @@ namespace UnityEngine.U2D.Common
             return GUIClip.visibleRect;
         }
 
-        public static bool IsGPUSkinningEnabled()
+        public static bool IsGPUSkinningEnabled(SpriteRenderer spriteRenderer)
         {
-            return SpriteRendererDataAccessExtensions.IsGPUSkinningEnabled();
+            return SpriteRendererDataAccessExtensions.IsGPUSkinningEnabled(spriteRenderer);
         }
 
         public static bool IsSRPBatchingEnabled(SpriteRenderer spriteRenderer)
