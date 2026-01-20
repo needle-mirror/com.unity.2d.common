@@ -64,10 +64,21 @@ namespace UnityEngine.U2D.Common.UTess
             double2 c = b0;
             double2 d = b1;
 
-            double x = (b.y - a.y) / (b.x - a.x);
+            double dx = b.x - a.x;
+            if (math.abs(dx) < kEpsilon)
+            {
+                // Line is vertical, check if other points have same x
+                return math.abs(c.x - a.x) > kEpsilon || math.abs(d.x - a.x) > kEpsilon;
+            }
+
+            double x = (b.y - a.y) / dx;
             double y = (c.y - a.y) / (c.x - a.x);
             double z = (d.y - a.y) / (d.x - a.x);
-            return ((!math.isinf(x) || !math.isinf(y) || !math.isinf(z)) && math.abs(x - y) > kEpsilon && math.abs(x - z) > kEpsilon);
+
+            // Return true if NOT collinear (slopes differ significantly)
+            // If any slope is infinite or slopes differ, lines are not collinear
+            return (math.isinf(y) || math.isinf(z) ||
+                    math.abs(x - y) > kEpsilon || math.abs(x - z) > kEpsilon);
         }
 
         internal static bool LineLineIntersection(double2 a0, double2 a1, double2 b0, double2 b1)
@@ -110,7 +121,8 @@ namespace UnityEngine.U2D.Common.UTess
             double cx = p3.x - p1.x;
             double cy = p3.y - p1.y;
             double t = (cx * dy - cy * dx) / bDotDPerp;
-            if ((t >= -kEpsilon) && (t <= 1.0f + kEpsilon))
+
+            if ((t >= -kEpsilon) && (t <= 1.0 + kEpsilon))
             {
                 result.x = p1.x + t * bx;
                 result.y = p1.y + t * by;
@@ -239,7 +251,7 @@ namespace UnityEngine.U2D.Common.UTess
                 // Check if edge is not lexicographically sorted
                 var a = points[s];
                 var b = points[t];
-                if (((a.x - b.x) < 0) || (a.x == b.x && (a.y - b.y) < 0))
+                if (((a.x - b.x) > 0) || (math.abs(a.x - b.x) < kEpsilon && (a.y - b.y) > 0))
                 {
                     var tmp = s;
                     s = t;

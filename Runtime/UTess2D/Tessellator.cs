@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
@@ -611,7 +611,7 @@ namespace UnityEngine.U2D.Common.UTess
             unsafe
             {
                 ModuleHandle.InsertionSort<int3, TessCellCompare>(
-                    cells.UnsafePtr, 0, m_CellCount - 1,
+                    cells.UnsafePtr, 0, count - 1,
                     new TessCellCompare());
             }
 
@@ -712,7 +712,8 @@ namespace UnityEngine.U2D.Common.UTess
             return cellsOut;
         }
 
-        internal NativeArray<int3> RemoveInterior(int cellCount)
+        // Unused todo: Remove
+        internal NativeArray<int3> RemoveInterior(ref int cellCount)
         {
             int constrainedCount = 0;
             var constrained = Constrain(ref constrainedCount);
@@ -795,6 +796,43 @@ namespace UnityEngine.U2D.Common.UTess
 
                     events[eventCount++] = _s;
                     events[eventCount++] = _e;
+                }
+                else
+                {
+                    if (a.y < b.y)
+                    {
+                        UEvent _s = new UEvent();
+                        _s.a = a;
+                        _s.b = b;
+                        _s.idx = i;
+                        _s.type = (int)UEventType.EVENT_START;
+
+                        UEvent _e = new UEvent();
+                        _e.a = b;
+                        _e.b = a;
+                        _e.idx = i;
+                        _e.type = (int)UEventType.EVENT_END;
+
+                        events[eventCount++] = _s;
+                        events[eventCount++] = _e;
+                    }
+                    else if (a.y > b.y)
+                    {
+                        UEvent _s = new UEvent();
+                        _s.a = b;
+                        _s.b = a;
+                        _s.idx = i;
+                        _s.type = (int)UEventType.EVENT_START;
+
+                        UEvent _e = new UEvent();
+                        _e.a = a;
+                        _e.b = b;
+                        _e.idx = i;
+                        _e.type = (int)UEventType.EVENT_END;
+
+                        events[eventCount++] = _s;
+                        events[eventCount++] = _e;
+                    }
                 }
             }
 

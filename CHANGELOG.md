@@ -1,8 +1,13 @@
 # Changelog
 
-## [13.0.1] - 2025-11-14
-### Fixed
-- Added code support to fix warnings of "a shader without GPU deformation support" occurs when switching from CPU to GPU Skinning with a PSB skinned sprite (DANB-1079)
+## [14.0.0] - 2026-01-20
+
+
+### Changed
+- Update Unity min version for package.
+
+### Added
+- Added SpriteCustomMetadataProvider to access sprite custom data from 2d packages.
 
 ## [13.0.0] - 2025-09-30
 ### Changed

@@ -9,13 +9,13 @@ namespace UnityEditor.U2D.Common.Path
         const string kControlPointGKey = UserSettings.kSettingsUniqueKey + "PathEditorSetting.ControlPointG";
         const string kControlPointBKey = UserSettings.kSettingsUniqueKey + "PathEditorSetting.ControlPointB";
         const string kControlPointAKey = UserSettings.kSettingsUniqueKey + "PathEditorSetting.ControlPointA";
-        static readonly GUIContent kControlPointKeyContent = EditorGUIUtility.TrTextContent("ControlPoint Color");
+        static readonly GUIContent kControlPointKeyContent = EditorGUIUtility.TrTextContent("Control Point Color");
 
         const string kControlPointSRKey = UserSettings.kSettingsUniqueKey + "PathEditorSetting.ControlPointSR";
         const string kControlPointSGKey = UserSettings.kSettingsUniqueKey + "PathEditorSetting.ControlPointSG";
         const string kControlPointSBKey = UserSettings.kSettingsUniqueKey + "PathEditorSetting.ControlPointSB";
         const string kControlPointSAKey = UserSettings.kSettingsUniqueKey + "PathEditorSetting.ControlPointSA";
-        static readonly GUIContent kControlPointSKeyContent = EditorGUIUtility.TrTextContent("ControlPoint (Selected)");      
+        static readonly GUIContent kControlPointSKeyContent = EditorGUIUtility.TrTextContent("Control Point (Selected)");      
         
         static bool showHandle = true;
         
@@ -217,7 +217,7 @@ namespace UnityEditor.U2D.Common.Path
         private static ControlPointSettings s_ControlPointSettings = new ControlPointSettings();
         private static HandleSettings s_HandleSettings = new HandleSettings();
         
-        public UserSettings() : base("Preferences/2D/SpriteShape", SettingsScope.User)
+        public UserSettings() : base("Preferences/2D/Sprite Shape", SettingsScope.User)
         {
             guiHandler = OnGUI;
         }
