@@ -1,5 +1,9 @@
 # Changelog
 
+## [12.0.2] - 2026-01-22
+### Changed
+- Update minimum Unity version.
+
 ## [12.0.1] - 2025-09-25
 ### Added
 - Added internal access for the Aseprite Importer.
