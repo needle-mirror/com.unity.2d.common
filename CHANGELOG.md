@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.0.2] - 2026-04-14
+### Fixed
+- Fix the issue where the Scene and Sprite Editor views fail to update correctly when an edge is deleted to split geometry. (UUM-134656)
+
+### Added
+- Allow retrieving Sprite Atlas asset GUID as SpriteID can be duplicated.
+
 ## [13.0.1] - 2025-11-14
 ### Fixed
 - Added code support to fix warnings of "a shader without GPU deformation support" occurs when switching from CPU to GPU Skinning with a PSB skinned sprite (DANB-1079)

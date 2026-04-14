@@ -124,7 +124,7 @@ namespace UnityEditor.U2D.Common
             return EditorGUIUtility.IconContent<T>();
         }
 
-        public static int GetAssetCreationInstanceID_ForNonExistingAssets()
+        public static EntityId GetAssetCreationInstanceID_ForNonExistingAssets()
         {
             return ProjectBrowser.kAssetCreationInstanceID_ForNonExistingAssets;
         }
@@ -179,22 +179,22 @@ namespace UnityEditor.U2D.Common
             public bool IsLocked() => isLocked;
         }
 
-        public static void SetAssetPreviewTextureCacheSize(int cacheSize, int clientId)
+        public static void SetAssetPreviewTextureCacheSize(int cacheSize, EntityId clientId)
         {
             AssetPreview.SetPreviewTextureCacheSize(cacheSize, clientId);
         }
 
-        public static Texture2D GetAssetPreview(int assetId, int clientId)
+        public static Texture2D GetAssetPreview(EntityId assetId, EntityId clientId)
         {
             return AssetPreview.GetAssetPreview(assetId, clientId);
         }
 
-        public static bool IsLoadingAssetPreview(int assetId, int clientId)
+        public static bool IsLoadingAssetPreview(EntityId assetId, EntityId clientId)
         {
             return AssetPreview.IsLoadingAssetPreview(assetId, clientId);
         }
 
-        public static void ClearAssetPreviews(int clientId)
+        public static void ClearAssetPreviews(EntityId clientId)
         {
             AssetPreview.DeletePreviewTextureManagerByID(clientId);
         }
