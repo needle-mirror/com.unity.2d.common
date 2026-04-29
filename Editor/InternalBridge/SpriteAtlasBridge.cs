@@ -90,6 +90,13 @@ namespace UnityEditor.U2D.Common
             return default;
         }
 
+        public GUID GetGUID(int index)
+        {
+            if (m_Data.IsCreated && index < m_Data.Length)
+                return m_Data[index].guid;
+            return default;
+        }
+
         public async Task WaitForJob()
         {
             while (!m_JobHandle.IsCompleted)
