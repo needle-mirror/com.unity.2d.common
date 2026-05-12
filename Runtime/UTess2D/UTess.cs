@@ -794,6 +794,23 @@ namespace UnityEngine.U2D.Common.UTess
             Copy(srcVertices, dstVertices, srcVertexCount);
         }
 
+        /// <summary>
+        /// Copy only edges that reference vertex indices in [0, vertexCount). Used when output vertices
+        /// come from Tessellator (tsVertexCount) but edges come from PlanarGraph (pgPointCount); if
+        /// tsVertexCount &lt; pgPointCount, pgEdges can reference indices we are not outputting.
+        /// Tessellator outputs vertices as pgPoints[0..vertexCount-1] in order (Tessellator.cs), so no index remapping is needed.
+        /// </summary>
+        static void TransferOutputEdgesToVertexCount(NativeArray<int2> srcEdges, int srcEdgeCount, int vertexCount, ref NativeArray<int2> dstEdges, ref int dstEdgeCount)
+        {
+            dstEdgeCount = 0;
+            for (int i = 0; i < srcEdgeCount; i++)
+            {
+                int2 e = srcEdges[i];
+                if (e.x >= 0 && e.x < vertexCount && e.y >= 0 && e.y < vertexCount)
+                    dstEdges[dstEdgeCount++] = e;
+            }
+        }
+
         static void GraphConditioner(NativeArray<float2> points, ref NativeArray<float2> pgPoints, ref int pgPointCount, ref NativeArray<int2> pgEdges, ref int pgEdgeCount, bool resetTopology)
         {
             var min = new float2(math.INFINITY, math.INFINITY);
@@ -944,8 +961,12 @@ namespace UnityEngine.U2D.Common.UTess
                 validGraph = Tessellator.Tessellate(allocator, pgPoints, pgPointCount, pgEdges, pgEdgeCount, ref tsVertices, ref tsVertexCount, ref tsIndices, ref tsIndexCount);
                 if (validGraph)
                 {
-                    // Copy Out
-                    TransferOutput(pgEdges, pgEdgeCount, ref outEdges, ref outEdgeCount, tsIndices, tsIndexCount, ref outIndices, ref outIndexCount, tsVertices, tsVertexCount, ref outVertices, ref outVertexCount);
+                    // Edges must reference only output vertices (tsVertexCount); pgEdges use pgPointCount which can be larger.
+                    TransferOutputEdgesToVertexCount(pgEdges, pgEdgeCount, tsVertexCount, ref outEdges, ref outEdgeCount);
+                    outIndexCount = tsIndexCount;
+                    outVertexCount = tsVertexCount;
+                    Copy(tsIndices, outIndices, tsIndexCount);
+                    Copy(tsVertices, outVertices, tsVertexCount);
                     if (handleEdgeCase == true)
                         outEdgeCount = 0;
                 }
@@ -1079,8 +1100,11 @@ namespace UnityEngine.U2D.Common.UTess
             // Refinement failed but Graph succeeded.
             if (validGraph && !refined)
             {
-                // Copy Out
-                TransferOutput(edges, edges.Length, ref outEdges, ref outEdgeCount, tsIndices, tsIndexCount, ref outIndices, ref outIndexCount, tsVertices, tsVertexCount, ref outVertices, ref outVertexCount);
+                TransferOutputEdgesToVertexCount(edges, edges.Length, tsVertexCount, ref outEdges, ref outEdgeCount);
+                outIndexCount = tsIndexCount;
+                outVertexCount = tsVertexCount;
+                Copy(tsIndices, outIndices, tsIndexCount);
+                Copy(tsVertices, outVertices, tsVertexCount);
             }
 
             // Dispose Temp Memory.

@@ -459,7 +459,7 @@ namespace UnityEngine.U2D.Common
                 for (int i = 0; i < indices.Length; ++i)
                     indices[i] = outputIndices[i];
                 edges = new int2[edgeCount];
-                for (int i = 0; i < edges.Length; ++i)
+                for (int i = 0; i < edgeCount; ++i)
                     edges[i] = outputEdges[i];
             }
 

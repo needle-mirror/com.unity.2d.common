@@ -10,3 +10,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.2D.Enhancers.Tests.Editor.Tests")]
 [assembly: InternalsVisibleTo("Unity.2D.Muse.Editor")]
 [assembly: InternalsVisibleTo("Unity.2D.Tooling.Editor")]
+[assembly: InternalsVisibleTo("Unity.2D.Tooling.Tests.Editor.Tests")]
