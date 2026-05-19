@@ -1,16 +1,11 @@
 # Changelog
 
-## [14.0.1] - 2026-05-12
-### Added
-- Allow retrieving Sprite Atlas asset GUID as SpriteID can be duplicated.
 
+## [15.0.0] - 2026-05-19
 ### Fixed
 - Fix the issue where the Scene and Sprite Editor views fail to update correctly when an edge is deleted to split geometry. (UUM-134656)
 
-
 ## [14.0.0] - 2026-01-20
-
-
 ### Changed
 - Update Unity min version for package.
 

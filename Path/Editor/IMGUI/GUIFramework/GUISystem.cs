@@ -79,8 +79,8 @@ namespace UnityEditor.U2D.Common.Path.GUIFramework
 
             if (m_GUIState.eventType == EventType.Layout)
                 m_ControlIDCheck = controlIDCheck;
-            else if (m_GUIState.eventType != EventType.Used && m_ControlIDCheck != controlIDCheck)
-                Debug.LogWarning("GetControlID at event " + m_GUIState.eventType + " returns a controlID different from the one in Layout event");
+            else if (m_GUIState.eventType != EventType.Used && m_ControlIDCheck != controlIDCheck && -1 != m_ControlIDCheck)
+                Debug.LogWarning("GetControlID at event " + m_GUIState.eventType + " returns a controlID " + controlIDCheck + " different from the one in Layout event " + m_ControlIDCheck);
 
             var nearestLayoutData = LayoutData.zero;
 
