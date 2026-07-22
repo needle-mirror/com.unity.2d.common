@@ -1,5 +1,9 @@
 # Changelog
 
+## [9.1.2] - 2026-07-22
+### Fixed
+- Fix the issue where the Scene and Sprite Editor views fail to update correctly when an edge is deleted to split geometry. (UUM-134656)
+
 ## [9.1.1] - 2025-05-26
 ### Fixed
 - DANB-796 Fixed case where 2D PSD Importer generates mipmaps when "Generate Mip Maps" is disabled
