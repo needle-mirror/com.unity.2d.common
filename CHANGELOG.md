@@ -1,5 +1,9 @@
 # Changelog
 
+## [12.0.4] - 2026-08-05
+### Fixed
+- Fixes for internal APIs.
+
 ## [12.0.3] - 2026-04-29
 ### Fixed
 - Fix the issue where the Scene and Sprite Editor views fail to update correctly when an edge is deleted to split geometry. (UUM-134656)

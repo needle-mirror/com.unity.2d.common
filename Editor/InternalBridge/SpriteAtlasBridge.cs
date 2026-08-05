@@ -71,7 +71,7 @@ namespace UnityEditor.U2D.Common
 
         public Vector2Int GetPageSize(int index)
         {
-            if (m_Data.IsCreated && index < m_Data.Length)
+            if (m_Data.IsCreated && index < m_Data.Length && index >= 0)
                 return new Vector2Int(m_Data[index].textureWidth, m_Data[index].textureHeight);
             return default;
         }
