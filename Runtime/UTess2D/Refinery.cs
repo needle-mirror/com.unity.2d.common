@@ -32,11 +32,14 @@ namespace UnityEngine.U2D.Common.UTess
                 if (!math.any(c.center - edgeA) || !math.any(c.center - edgeB))
                     continue;
 
-                // Get Radius
                 var edgeD = edgeA - edgeB;
                 var edgeM = (edgeA + edgeB) * 0.5f;
                 var edgeR = math.length(edgeD) * 0.5f;
-                if (math.length(edgeM - c.center) > edgeR)
+
+                var centerToMidpoint = edgeM - c.center;
+                var distCenterToMid = math.length(centerToMidpoint);
+
+                if (distCenterToMid > edgeR)
                     continue;
 
                 UEncroachingSegment es = new UEncroachingSegment();
@@ -62,7 +65,10 @@ namespace UnityEngine.U2D.Common.UTess
             var edgeB = pgPoints[edge.y];
             var split = (edgeA + edgeB) * 0.5f;
             var neid = 0;
-            if (math.abs(edge.x - edge.y) == 1)
+
+            // Cache edge index difference
+            var edgeDiff = edge.x - edge.y;
+            if (math.abs(edgeDiff) == 1)
             {
                 neid = (edge.x > edge.y) ? edge.x : edge.y;
                 InsertVertex(ref pgPoints, ref pgPointCount, split, ref neid);
@@ -79,8 +85,13 @@ namespace UnityEngine.U2D.Common.UTess
             {
                 neid = pgPointCount;
                 pgPoints[pgPointCount++] = split;
-                pgEdges[sid] = new int2(math.max(edge.x, edge.y), neid);
-                pgEdges[pgEdgeCount++] = new int2(math.min(edge.x, edge.y), neid);
+
+                // Cache min/max calculations
+                var maxEdge = math.max(edge.x, edge.y);
+                var minEdge = math.min(edge.x, edge.y);
+
+                pgEdges[sid] = new int2(maxEdge, neid);
+                pgEdges[pgEdgeCount++] = new int2(minEdge, neid);
             }
         }
 

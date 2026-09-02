@@ -4,6 +4,16 @@ using Unity.Collections;
 
 namespace UnityEngine.U2D.Common
 {
+    // SRP-Batcher compatibility of a SpriteRenderer as a tri-state. Unlike IsSRPBatchingEnabled (bool),
+    // this distinguishes "not computed yet" (Undetermined) from a determined "Incompatible", so callers
+    // can defer a decision instead of treating an unknown as a permanent No.
+    internal enum SpriteSRPBatchingState
+    {
+        Undetermined = 0,
+        Incompatible = 1,
+        Compatible = 2
+    }
+
     internal static class InternalEngineBridge
     {
         public static void SetLocalAABB(SpriteRenderer spriteRenderer, Bounds aabb)
@@ -26,26 +36,6 @@ namespace UnityEngine.U2D.Common
             SpriteRendererDataAccessExtensions.SetupMaterialProperties(spriteRenderer);
         }
 
-        public static Vector2 GUIUnclip(Vector2 v)
-        {
-            return GUIClip.Unclip(v);
-        }
-
-        public static Rect GetGUIClipTopMostRect()
-        {
-            return GUIClip.topmostRect;
-        }
-
-        public static Rect GetGUIClipTopRect()
-        {
-            return GUIClip.GetTopRect();
-        }
-
-        public static Rect GetGUIClipVisibleRect()
-        {
-            return GUIClip.visibleRect;
-        }
-
         public static bool IsGPUSkinningEnabled(SpriteRenderer spriteRenderer)
         {
             return SpriteRendererDataAccessExtensions.IsGPUSkinningEnabled(spriteRenderer);
@@ -54,6 +44,18 @@ namespace UnityEngine.U2D.Common
         public static bool IsSRPBatchingEnabled(SpriteRenderer spriteRenderer)
         {
             return SpriteRendererDataAccessExtensions.IsSRPBatchingEnabled(spriteRenderer);
+        }
+
+        public static SpriteSRPBatchingState GetSRPBatchingState(SpriteRenderer spriteRenderer)
+        {
+#if UNITY_6000_7_OR_NEWER
+            return (SpriteSRPBatchingState)SpriteRendererDataAccessExtensions.GetSRPBatchingState(spriteRenderer);
+#else
+            // Older editors lack the tri-state engine API; collapse to a determined result.
+            return SpriteRendererDataAccessExtensions.IsSRPBatchingEnabled(spriteRenderer)
+                ? SpriteSRPBatchingState.Compatible
+                : SpriteSRPBatchingState.Incompatible;
+#endif
         }
 
         public static void SetBatchDeformableBufferAndLocalAABBArray(SpriteRenderer[] spriteRenderers, NativeArray<IntPtr> buffers, NativeArray<int> bufferSizes, NativeArray<Bounds> bounds)

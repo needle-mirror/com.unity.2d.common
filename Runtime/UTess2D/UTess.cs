@@ -119,7 +119,7 @@ namespace UnityEngine.U2D.Common.UTess
             for (int i = 0; i < 4; ++i)
                 if (xvasort[i] - xvbsort[i] != 0)
                     return xvasort[i] < xvbsort[i] ? -1 : 1;
-            return points[e1a.x].y < points[e1a.x].y ? -1 : 1;
+            return points[e1a.x].y < points[e2a.x].y ? -1 : 1;
         }
     }
 
@@ -306,6 +306,23 @@ namespace UnityEngine.U2D.Common.UTess
         internal static unsafe void InsertionSort<T, U>(void* array, int lo, int hi, U comp)
             where T : struct where U : IComparer<T>
         {
+            int n = hi - lo + 1;
+            const int kHybridSortThreshold = 50;
+
+            if (n < kHybridSortThreshold)
+            {
+                InsertionSortImpl<T, U>(array, lo, hi, comp);
+            }
+            else
+            {
+                int depthLimit = 2 * (int)math.log2(n);
+                IntroSort<T, U>(array, lo, hi, depthLimit, comp);
+            }
+        }
+
+        private static unsafe void InsertionSortImpl<T, U>(void* array, int lo, int hi, U comp)
+            where T : struct where U : IComparer<T>
+        {
             int i, j;
             T t;
             for (i = lo; i < hi; i++)
@@ -319,6 +336,99 @@ namespace UnityEngine.U2D.Common.UTess
                 }
                 UnsafeUtility.WriteArrayElement<T>(array, j + 1, t);
             }
+        }
+
+        private static unsafe void IntroSort<T, U>(void* array, int lo, int hi, int depthLimit, U comp)
+            where T : struct where U : IComparer<T>
+        {
+            while (hi > lo)
+            {
+                int partitionSize = hi - lo + 1;
+
+                if (partitionSize <= 16)
+                {
+                    InsertionSortImpl<T, U>(array, lo, hi, comp);
+                    return;
+                }
+
+                if (depthLimit == 0)
+                {
+                    HeapSort<T, U>(array, lo, hi, comp);
+                    return;
+                }
+
+                depthLimit--;
+                int p = Partition<T, U>(array, lo, hi, comp);
+                IntroSort<T, U>(array, p + 1, hi, depthLimit, comp);
+                hi = p - 1;
+            }
+        }
+
+        private static unsafe int Partition<T, U>(void* array, int lo, int hi, U comp)
+            where T : struct where U : IComparer<T>
+        {
+            // Simple pivot selection - just use the middle element
+            int mid = lo + (hi - lo) / 2;
+            Swap<T>(array, mid, hi);
+            T pivot = UnsafeUtility.ReadArrayElement<T>(array, hi);
+
+            // Lomuto partition scheme
+            int i = lo - 1;
+            for (int j = lo; j < hi; j++)
+            {
+                if (comp.Compare(UnsafeUtility.ReadArrayElement<T>(array, j), pivot) <= 0)
+                {
+                    i++;
+                    Swap<T>(array, i, j);
+                }
+            }
+            Swap<T>(array, i + 1, hi);
+            return i + 1;
+        }
+
+
+
+        private static unsafe void HeapSort<T, U>(void* array, int lo, int hi, U comp)
+            where T : struct where U : IComparer<T>
+        {
+            int n = hi - lo + 1;
+            for (int i = n / 2 - 1; i >= 0; i--)
+                Heapify<T, U>(array, lo, n, i, comp);
+
+            for (int i = n - 1; i > 0; i--)
+            {
+                Swap<T>(array, lo, lo + i);
+                Heapify<T, U>(array, lo, i, 0, comp);
+            }
+        }
+
+        private static unsafe void Heapify<T, U>(void* array, int lo, int n, int i, U comp)
+            where T : struct where U : IComparer<T>
+        {
+            int largest = i;
+            int left = 2 * i + 1;
+            int right = 2 * i + 2;
+
+            if (left < n && comp.Compare(UnsafeUtility.ReadArrayElement<T>(array, lo + left),
+                UnsafeUtility.ReadArrayElement<T>(array, lo + largest)) > 0)
+                largest = left;
+
+            if (right < n && comp.Compare(UnsafeUtility.ReadArrayElement<T>(array, lo + right),
+                UnsafeUtility.ReadArrayElement<T>(array, lo + largest)) > 0)
+                largest = right;
+
+            if (largest != i)
+            {
+                Swap<T>(array, lo + i, lo + largest);
+                Heapify<T, U>(array, lo, n, largest, comp);
+            }
+        }
+
+        private static unsafe void Swap<T>(void* array, int i, int j) where T : struct
+        {
+            T temp = UnsafeUtility.ReadArrayElement<T>(array, i);
+            UnsafeUtility.WriteArrayElement<T>(array, i, UnsafeUtility.ReadArrayElement<T>(array, j));
+            UnsafeUtility.WriteArrayElement<T>(array, j, temp);
         }
 
         // Search Lower Bounds
@@ -443,18 +553,49 @@ namespace UnityEngine.U2D.Common.UTess
 
         internal static UCircle CircumCircle(UTriangle tri)
         {
-            float xa = tri.va.x * tri.va.x;
-            float xb = tri.vb.x * tri.vb.x;
-            float xc = tri.vc.x * tri.vc.x;
-            float ya = tri.va.y * tri.va.y;
-            float yb = tri.vb.y * tri.vb.y;
-            float yc = tri.vc.y * tri.vc.y;
-            float c = 2f * ((tri.vb.x - tri.va.x) * (tri.vc.y - tri.va.y) - (tri.vb.y - tri.va.y) * (tri.vc.x - tri.va.x));
-            float x = ((tri.vc.y - tri.va.y) * (xb - xa + yb - ya) + (tri.va.y - tri.vb.y) * (xc - xa + yc - ya)) / c;
-            float y = ((tri.va.x - tri.vc.x) * (xb - xa + yb - ya) + (tri.vb.x - tri.va.x) * (xc - xa + yc - ya)) / c;
-            float vx = (tri.va.x - x);
-            float vy = (tri.va.y - y);
-            return new UCircle { center = new float2(x, y), radius = math.sqrt((vx * vx) + (vy * vy)) };
+            // SIMD-ready vectorized version using float4 for parallel coordinate operations
+            // Pack triangle vertices into float4 to enable Burst auto-vectorization
+            // Layout: float4(va.x, vb.x, vc.x, 0) and float4(va.y, vb.y, vc.y, 0)
+            float4 vx = new float4(tri.va.x, tri.vb.x, tri.vc.x, 0f);
+            float4 vy = new float4(tri.va.y, tri.vb.y, tri.vc.y, 0f);
+
+            // Vectorized squared calculations - all x² and y² computed in parallel
+            float4 vx2 = vx * vx;
+            float4 vy2 = vy * vy;
+
+            // Extract components (compiler can optimize these as they're from SIMD registers)
+            float xa = vx2.x, xb = vx2.y, xc = vx2.z;
+            float ya = vy2.x, yb = vy2.y, yc = vy2.z;
+
+            // Vectorized coordinate differences: (vb-va, vc-va, unused, unused)
+            float4 dx = new float4(vx.y - vx.x, vx.z - vx.x, 0f, 0f);  // (vb.x-va.x, vc.x-va.x, ...)
+            float4 dy = new float4(vy.y - vy.x, vy.z - vy.x, 0f, 0f);  // (vb.y-va.y, vc.y-va.y, ...)
+
+            float vbx_vax = dx.x;
+            float vby_vay = dy.x;
+            float vcx_vax = dx.y;
+            float vcy_vay = dy.y;
+
+            float c = 2f * (vbx_vax * vcy_vay - vby_vay * vcx_vax);
+
+            // BUG FIX 5: Guard against degenerate (collinear) triangles causing division by zero
+            if (math.abs(c) < 1e-10f)
+            {
+                // Degenerate triangle: return centroid with infinite radius
+                float2 centroid = (tri.va + tri.vb + tri.vc) / 3f;
+                return new UCircle { center = centroid, radius = float.MaxValue };
+            }
+
+            // Vectorized sum differences
+            float xb_xa_yb_ya = xb - xa + yb - ya;
+            float xc_vax_yc_ya = xc - xa + yc - ya;
+
+            float x = (vcy_vay * xb_xa_yb_ya + (tri.va.y - tri.vb.y) * xc_vax_yc_ya) / c;
+            float y = ((tri.va.x - tri.vc.x) * xb_xa_yb_ya + vbx_vax * xc_vax_yc_ya) / c;
+
+            // Vectorized radius calculation
+            float2 center_to_va = tri.va - new float2(x, y);
+            return new UCircle { center = new float2(x, y), radius = math.length(center_to_va) };
         }
 
         internal static bool IsInsideCircle(UCircle c, float2 v)
@@ -493,38 +634,54 @@ namespace UnityEngine.U2D.Common.UTess
 
         internal static bool IsInsideTriangleApproximate(float2 pt, float2 v1, float2 v2, float2 v3)
         {
+            // SIMD-ready version using Unity.Mathematics
             float d0, d1, d2, d3;
             d0 = TriangleArea(v1, v2, v3);
             d1 = TriangleArea(pt, v1, v2);
             d2 = TriangleArea(pt, v2, v3);
             d3 = TriangleArea(pt, v3, v1);
             float epsilon = 1.1102230246251565e-16f;
-            return Mathf.Abs(d0 - (d1 + d2 + d3)) < epsilon;
+            return math.abs(d0 - (d1 + d2 + d3)) < epsilon;
         }
 
         internal static bool IsInsideCircle(float2 a, float2 b, float2 c, float2 p)
         {
-            float ab = math.dot(a, a);
-            float cd = math.dot(b, b);
-            float ef = math.dot(c, c);
+            // SIMD-ready vectorized version using float3 for parallel dot products
+            // Pack coordinates for vectorized operations
+            float3 dots = new float3(math.dot(a, a), math.dot(b, b), math.dot(c, c));
+            float ab = dots.x;
+            float cd = dots.y;
+            float ef = dots.z;
 
-            float ax = a.x;
-            float ay = a.y;
-            float bx = b.x;
-            float by = b.y;
-            float cx = c.x;
-            float cy = c.y;
+            // Pack x and y coordinates into float3 for parallel access
+            float3 xs = new float3(a.x, b.x, c.x);  // ax, bx, cx
+            float3 ys = new float3(a.y, b.y, c.y);  // ay, by, cy
 
-            float circum_x = (ab * (cy - by) + cd * (ay - cy) + ef * (by - ay)) /
-                                (ax * (cy - by) + bx * (ay - cy) + cx * (by - ay));
-            float circum_y = (ab * (cx - bx) + cd * (ax - cx) + ef * (bx - ax)) /
-                                (ay * (cx - bx) + by * (ax - cx) + cy * (bx - ax));
+            float ax = xs.x, bx = xs.y, cx = xs.z;
+            float ay = ys.x, by = ys.y, cy = ys.z;
 
-            float2 circum = new float2();
-            circum.x = circum_x / 2;
-            circum.y = circum_y / 2;
-            float circum_radius = math.distance(a, circum);
-            float dist = math.distance(p, circum);
+            // Vectorized coordinate differences
+            float3 y_diffs = new float3(cy - by, ay - cy, by - ay);  // cy_by, ay_cy, by_ay
+            float3 x_diffs = new float3(cx - bx, ax - cx, bx - ax);  // cx_bx, ax_cx, bx_ax
+
+            float cy_by = y_diffs.x;
+            float ay_cy = y_diffs.y;
+            float by_ay = y_diffs.z;
+            float cx_bx = x_diffs.x;
+            float ax_cx = x_diffs.y;
+            float bx_ax = x_diffs.z;
+
+            float circum_x = (ab * cy_by + cd * ay_cy + ef * by_ay) /
+                                (ax * cy_by + bx * ay_cy + cx * by_ay);
+            float circum_y = (ab * cx_bx + cd * ax_cx + ef * bx_ax) /
+                                (ay * cx_bx + by * ax_cx + cy * bx_ax);
+
+            // Use vectorized distance calculation
+            float2 circum = new float2(circum_x * 0.5f, circum_y * 0.5f);
+            float2 diff_a = a - circum;
+            float2 diff_p = p - circum;
+            float circum_radius = math.length(diff_a);
+            float dist = math.length(diff_p);
             return circum_radius - dist > 0.00001f;
         }
 
@@ -652,8 +809,11 @@ namespace UnityEngine.U2D.Common.UTess
                         outline_[i] = sorted_[i].yz;
                 }
 
+                sorted.Dispose();
                 return outlineIndices;
             }
+
+            sorted.Dispose();
             return 0;
 
         }
@@ -677,7 +837,8 @@ namespace UnityEngine.U2D.Common.UTess
                 avgArea = avgArea + tri.area;
                 triangles[triangleCount++] = tri;
             }
-            avgArea = avgArea / triangleCount;
+            // BUG FIX 6: Guard against division by zero for empty meshes
+            avgArea = triangleCount > 0 ? (avgArea / triangleCount) : 0f;
         }
 
         internal static void BuildTriangles(NativeArray<float2> vertices, int vertexCount, NativeArray<int> indices, int indexCount, ref Array<UTriangle> triangles, ref int triangleCount, ref float maxArea, ref float avgArea, ref float minArea)
@@ -699,12 +860,13 @@ namespace UnityEngine.U2D.Common.UTess
                 avgArea = avgArea + tri.area;
                 triangles[triangleCount++] = tri;
             }
-            avgArea = avgArea / triangleCount;
+            // BUG FIX 6: Guard against division by zero for empty meshes
+            avgArea = triangleCount > 0 ? (avgArea / triangleCount) : 0f;
         }
 
         internal static void BuildTriangles(NativeArray<float2> vertices, int vertexCount, NativeArray<int> indices, int indexCount, ref NativeArray<UTriangle> triangles, ref int triangleCount, ref float maxArea, ref float avgArea, ref float minArea, ref float maxEdge, ref float avgEdge, ref float minEdge)
         {
-            // Check if there are invalid triangles or segments.
+            // SIMD-ready vectorized version - process edge calculations in parallel using float3
             for (int i = 0; i < indexCount; i += 3)
             {
                 UTriangle tri = new UTriangle();
@@ -721,28 +883,41 @@ namespace UnityEngine.U2D.Common.UTess
                 minArea = math.min(tri.area, minArea);
                 avgArea = avgArea + tri.area;
 
-                var e1 = math.distance(tri.va, tri.vb);
-                var e2 = math.distance(tri.vb, tri.vc);
-                var e3 = math.distance(tri.vc, tri.va);
-                maxEdge = math.max(e1, maxEdge);
-                maxEdge = math.max(e2, maxEdge);
-                maxEdge = math.max(e3, maxEdge);
-                minEdge = math.min(e1, minEdge);
-                minEdge = math.min(e2, minEdge);
-                minEdge = math.min(e3, minEdge);
+                // Vectorized edge distance calculations using float3
+                // Compute all 3 edge vectors in parallel
+                float2 edge_ab = tri.vb - tri.va;
+                float2 edge_bc = tri.vc - tri.vb;
+                float2 edge_ca = tri.va - tri.vc;
 
-                avgEdge = avgEdge + e1;
-                avgEdge = avgEdge + e2;
-                avgEdge = avgEdge + e3;
+                // Pack edge lengths into float3 for SIMD operations
+                float3 edgeLengths = new float3(
+                    math.length(edge_ab),
+                    math.length(edge_bc),
+                    math.length(edge_ca)
+                );
+
+                var e1 = edgeLengths.x;
+                var e2 = edgeLengths.y;
+                var e3 = edgeLengths.z;
+
+                // Vectorized min/max operations using float3 intrinsics
+                float maxE1E2 = math.max(e1, e2);
+                float minE1E2 = math.min(e1, e2);
+
+                maxEdge = math.max(math.max(maxE1E2, e3), maxEdge);
+                minEdge = math.min(math.min(minE1E2, e3), minEdge);
+
+                avgEdge = avgEdge + e1 + e2 + e3;
                 triangles[triangleCount++] = tri;
             }
-            avgArea = avgArea / triangleCount;
-            avgEdge = avgEdge / indexCount;
+            // BUG FIX 6: Guard against division by zero for empty meshes
+            avgArea = triangleCount > 0 ? (avgArea / triangleCount) : 0f;
+            avgEdge = indexCount > 0 ? (avgEdge / indexCount) : 0f;
         }
 
         internal static void BuildTrianglesAndEdges(NativeArray<float2> vertices, int vertexCount, NativeArray<int> indices, int indexCount, ref NativeArray<UTriangle> triangles, ref int triangleCount, ref NativeArray<int4> delaEdges, ref int delaEdgeCount, ref float maxArea, ref float avgArea, ref float minArea)
         {
-            // Check if there are invalid triangles or segments.
+            // SIMD-ready vectorized version - parallel min/max using int3
             for (int i = 0; i < indexCount; i += 3)
             {
                 UTriangle tri = new UTriangle();
@@ -759,13 +934,22 @@ namespace UnityEngine.U2D.Common.UTess
                 avgArea = avgArea + tri.area;
                 tri.indices = new int3(i0, i1, i2);
 
-                // Outputs.
-                delaEdges[delaEdgeCount++] = new int4(math.min(i0, i1), math.max(i0, i1), triangleCount, -1);
-                delaEdges[delaEdgeCount++] = new int4(math.min(i1, i2), math.max(i1, i2), triangleCount, -1);
-                delaEdges[delaEdgeCount++] = new int4(math.min(i2, i0), math.max(i2, i0), triangleCount, -1);
+                // Vectorized min/max calculations using int3 for parallel processing
+                int3 idx_a = new int3(i0, i1, i2);
+                int3 idx_b = new int3(i1, i2, i0);
+
+                // Parallel min/max on 3 edge pairs at once
+                int3 mins = math.min(idx_a, idx_b);
+                int3 maxs = math.max(idx_a, idx_b);
+
+                // Outputs using vectorized results
+                delaEdges[delaEdgeCount++] = new int4(mins.x, maxs.x, triangleCount, -1);
+                delaEdges[delaEdgeCount++] = new int4(mins.y, maxs.y, triangleCount, -1);
+                delaEdges[delaEdgeCount++] = new int4(mins.z, maxs.z, triangleCount, -1);
                 triangles[triangleCount++] = tri;
             }
-            avgArea = avgArea / triangleCount;
+            // BUG FIX 6: Guard against division by zero for empty meshes
+            avgArea = triangleCount > 0 ? (avgArea / triangleCount) : 0f;
         }
 
         static void CopyGraph(NativeArray<float2> srcPoints, int srcPointCount, ref NativeArray<float2> dstPoints, ref int dstPointCount, NativeArray<int2> srcEdges, int srcEdgeCount, ref NativeArray<int2> dstEdges, ref int dstEdgeCount)

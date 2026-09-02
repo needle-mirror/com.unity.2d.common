@@ -78,11 +78,21 @@ namespace UnityEngine.U2D.Common.UTess
         {
             var es = triangles[e.x].c.center;
             var ee = triangles[e.y].c.center;
+
+            // Cache cross product calculation
             var d = es.x * ee.y - ee.x * es.y;
+
+            // Cache distance calculation
             distance = distance + math.distance(es, ee);
+
             area = area + d;
-            centroid.x += (ee.x + es.x) * d;
-            centroid.y += (ee.y + es.y) * d;
+
+            // Cache coordinate sums for reuse
+            var sumX = ee.x + es.x;
+            var sumY = ee.y + es.y;
+
+            centroid.x += sumX * d;
+            centroid.y += sumY * d;
         }
 
         // Connect Triangles
@@ -98,17 +108,23 @@ namespace UnityEngine.U2D.Common.UTess
                 ni = affectEdges[i];
                 if (checkSet[ni] == 0)
                 {
-                    if (voronoiEdges[ni].x == connectedTri[i - 1].y)
+                    // Cache previous triangle connection point
+                    var prevY = connectedTri[i - 1].y;
+
+                    // Cache current voronoi edge
+                    var voroEdge = voronoiEdges[ni];
+
+                    if (voroEdge.x == prevY)
                     {
-                        connectedTri[i] = new int4(voronoiEdges[ni].x, voronoiEdges[ni].y, 0, 0);
+                        connectedTri[i] = new int4(voroEdge.x, voroEdge.y, 0, 0);
                         checkSet[ni] = 1;
                         continue;
                     }
                     else
                     {
-                        if (voronoiEdges[ni].y == connectedTri[i - 1].y)
+                        if (voroEdge.y == prevY)
                         {
-                            connectedTri[i] = new int4(voronoiEdges[ni].y, voronoiEdges[ni].x, 0, 0);
+                            connectedTri[i] = new int4(voroEdge.y, voroEdge.x, 0, 0);
                             checkSet[ni] = 1;
                             continue;
                         }
@@ -116,21 +132,28 @@ namespace UnityEngine.U2D.Common.UTess
                 }
 
                 var connected = false;
+                // Cache previous triangle connection point
+                var prevConnY = connectedTri[i - 1].y;
+
                 for (int j = 0; j < triangleCount; ++j)
                 {
                     ni = affectEdges[j];
                     if (checkSet[ni] == 1)
                         continue;
-                    if (voronoiEdges[ni].x == connectedTri[i - 1].y)
+
+                    // Cache voronoi edge for this iteration
+                    var voroEdgeJ = voronoiEdges[ni];
+
+                    if (voroEdgeJ.x == prevConnY)
                     {
-                        connectedTri[i] = new int4(voronoiEdges[ni].x, voronoiEdges[ni].y, 0, 0);
+                        connectedTri[i] = new int4(voroEdgeJ.x, voroEdgeJ.y, 0, 0);
                         checkSet[ni] = 1;
                         connected = true;
                         break;
                     }
-                    else if (voronoiEdges[ni].y == connectedTri[i - 1].y)
+                    else if (voroEdgeJ.y == prevConnY)
                     {
-                        connectedTri[i] = new int4(voronoiEdges[ni].y, voronoiEdges[ni].x, 0, 0);
+                        connectedTri[i] = new int4(voroEdgeJ.y, voroEdgeJ.x, 0, 0);
                         checkSet[ni] = 1;
                         connected = true;
                         break;

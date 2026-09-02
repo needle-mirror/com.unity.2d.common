@@ -1,11 +1,7 @@
 using System;
 using Unity.Collections;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
 using System.Collections.Generic;
-using System.Reflection;
-using Unity.Burst;
 using Unity.Mathematics;
 
 namespace UnityEngine.U2D.Common.UTess
@@ -25,7 +21,9 @@ namespace UnityEngine.U2D.Common.UTess
             {
                 if (x.x != y.x)
                     return (x.x < y.x) ? -1 : 1;
-                return 0;
+                if (x.y != y.y)
+                    return (x.y < y.y) ? -1 : 1;
+                return (x.z < y.z) ? -1 : (x.z > y.z) ? 1 : 0;
             }
         }
 

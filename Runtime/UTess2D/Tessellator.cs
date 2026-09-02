@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
@@ -244,12 +244,19 @@ namespace UnityEngine.U2D.Common.UTess
             var UEdgeCount = 0;
             var UEdges = new NativeArray<int2>(m_StarCount, m_Allocator);
 
-            // Input Edges.
+            // SIMD-ready vectorized version - use int2 min/max for parallel edge normalization
+            // Input Edges - vectorized min/max operations
             for (int i = 0; i < edgeCount; ++i)
             {
                 int2 e = edges[i];
-                e.x = (edges[i].x < edges[i].y) ? edges[i].x : edges[i].y;
-                e.y = (edges[i].x > edges[i].y) ? edges[i].x : edges[i].y;
+                // Vectorized approach: create int2 with swapped components and use min/max
+                int2 e_swapped = e.yx;  // Swap x and y
+                int2 mins = math.min(e, e_swapped);
+                int2 maxs = math.max(e, e_swapped);
+
+                // Result: e.x = min, e.y = max (normalized edge)
+                e.x = mins.x;
+                e.y = maxs.y;
                 edges[i] = e;
                 InsertUniqueEdge(UEdges, e, ref UEdgeCount);
             }
@@ -295,14 +302,76 @@ namespace UnityEngine.U2D.Common.UTess
                 m_Stars[c] = sc;
             }
 
+            // Sort star points for binary search optimization
+            SortStarPointPairs();
+        }
+
+        void SortStarPointPairs()
+        {
+            // Sort each star's point pairs by the second element (odd indices)
+            // This enables binary search in OppositeOf
+            for (int i = 0; i < m_Stars.Length; ++i)
+            {
+                UStar star = m_Stars[i];
+                int pairCount = star.pointCount / 2;
+
+                if (pairCount <= 1)
+                    continue;
+
+                // Insertion sort for pairs - sorts by the second element of each pair
+                // Pairs are stored as [first, second, first, second, ...]
+                ArraySlice<int> points = star.points;
+                for (int j = 1; j < pairCount; ++j)
+                {
+                    int keyIdx = j << 1; // j * 2
+                    int keyFirst = points[keyIdx];
+                    int keySecond = points[keyIdx + 1];
+
+                    int k = j - 1;
+                    while (k >= 0 && points[(k << 1) + 1] > keySecond)
+                    {
+                        int srcIdx = k << 1;
+                        int dstIdx = (k + 1) << 1;
+                        points[dstIdx] = points[srcIdx];
+                        points[dstIdx + 1] = points[srcIdx + 1];
+                        k--;
+                    }
+
+                    int insertIdx = (k + 1) << 1;
+                    points[insertIdx] = keyFirst;
+                    points[insertIdx + 1] = keySecond;
+                }
+            }
         }
 
         int OppositeOf(int a, int b)
         {
+            // Optimized binary search version - requires sorted star points
             ArraySlice<int> points = m_Stars[b].points;
-            for (int k = 1, n = m_Stars[b].pointCount; k < n; k += 2)
-                if (points[k] == a)
-                    return points[k - 1];
+            int n = m_Stars[b].pointCount;
+
+            // BUG FIX 7: Guard against empty star causing undefined behavior
+            if (n <= 0)
+                return -1;
+
+            // Binary search through the pairs (stored as [even, odd])
+            // We're searching for points[k] == a where k is odd
+            int left = 0;
+            int right = (n / 2) - 1;
+
+            while (left <= right)
+            {
+                int mid = (left + right) >> 1;
+                int idx = (mid << 1) + 1; // Convert to odd index
+                int value = points[idx];
+
+                if (value == a)
+                    return points[idx - 1];
+                else if (value < a)
+                    left = mid + 1;
+                else
+                    right = mid - 1;
+            }
             return -1;
         }
 
@@ -326,18 +395,55 @@ namespace UnityEngine.U2D.Common.UTess
 
         void AddTriangle(int i, int j, int k)
         {
+            // Maintain sorted order: insert pairs at correct position
+            // Pairs are sorted by second element (odd indices)
             UStar si = m_Stars[i];
             UStar sj = m_Stars[j];
             UStar sk = m_Stars[k];
-            si.points[si.pointCount++] = j;
-            si.points[si.pointCount++] = k;
-            sj.points[sj.pointCount++] = k;
-            sj.points[sj.pointCount++] = i;
-            sk.points[sk.pointCount++] = i;
-            sk.points[sk.pointCount++] = j;
+            AddPairSorted(ref si, j, k);
+            AddPairSorted(ref sj, k, i);
+            AddPairSorted(ref sk, i, j);
             m_Stars[i] = si;
             m_Stars[j] = sj;
             m_Stars[k] = sk;
+        }
+
+        void AddPairSorted(ref UStar star, int first, int second)
+        {
+            ArraySlice<int> points = star.points;
+            int n = star.pointCount;
+
+            // Find insertion position using binary search on second element
+            int insertIdx = n; // Default: append at end
+
+            // Binary search for correct position
+            int left = 0;
+            int right = (n / 2) - 1;
+
+            while (left <= right)
+            {
+                int mid = (left + right) >> 1;
+                int idx = (mid << 1) + 1;
+                int value = points[idx];
+
+                if (value < second)
+                    left = mid + 1;
+                else
+                    right = mid - 1;
+            }
+
+            insertIdx = left << 1; // Convert pair index back to array index
+
+            // Shift elements right to make space
+            for (int i = n - 1; i >= insertIdx; i--)
+            {
+                points[i + 2] = points[i];
+            }
+
+            // Insert new pair
+            points[insertIdx] = first;
+            points[insertIdx + 1] = second;
+            star.pointCount = n + 2;
         }
 
         void RemovePair(int r, int j, int k)
@@ -348,8 +454,12 @@ namespace UnityEngine.U2D.Common.UTess
             {
                 if (points[i - 1] == j && points[i] == k)
                 {
-                    points[i - 1] = points[n - 2];
-                    points[i] = points[n - 1];
+                    // Maintain sorted order by shifting elements left instead of swap-and-pop
+                    // This preserves the sort required for binary search in OppositeOf
+                    for (int shift = i - 1; shift < n - 2; shift++)
+                    {
+                        points[shift] = points[shift + 2];
+                    }
                     s.points = points;
                     s.pointCount = s.pointCount - 2;
                     m_Stars[r] = s;

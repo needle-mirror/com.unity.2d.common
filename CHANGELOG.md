@@ -1,5 +1,8 @@
 # Changelog
 
+## [16.0.0] - 2026-09-02
+### Changed
+- Improved UTess Performance.
 
 ## [15.0.0] - 2026-05-19
 ### Fixed

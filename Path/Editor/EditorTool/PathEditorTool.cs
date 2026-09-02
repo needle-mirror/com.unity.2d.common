@@ -14,12 +14,26 @@ namespace UnityEditor.U2D.Common.Path
         internal static readonly GUIContent shapeToolIcon = IconContent("ShapeTool", "Start editing the Shape in the Scene View.");
         internal static readonly GUIContent shapeToolPro = IconContent("ShapeToolPro", "Start editing the Shape in the Scene View.");
 
+        internal static readonly GUIContent shapeToolInspectorIcon = IconContent("ShapeToolInspector", "Start editing the Shape in the Scene View.");
+        internal static readonly GUIContent shapeToolInspectorPro = IconContent("ShapeToolInspectorPro", "Start editing the Shape in the Scene View.");
+
         internal static GUIContent IconContent(string name, string tooltip = null)
         {
             return new GUIContent(AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.unity.2d.common/Path/Editor/Handles/" + name + ".png"), tooltip);
         }
 
         public static GUIContent icon
+        {
+            get
+            {
+                if (EditorGUIUtility.isProSkin)
+                    return shapeToolInspectorPro;
+
+                return shapeToolInspectorIcon;
+            }
+        }
+
+        public static GUIContent toolbarIcon
         {
             get
             {
@@ -114,7 +128,7 @@ namespace UnityEditor.U2D.Common.Path
 
         public override GUIContent toolbarIcon
         {
-            get { return PathEditorToolContents.icon; }
+            get { return PathEditorToolContents.toolbarIcon; }
         }
 
         public override bool IsAvailable()
