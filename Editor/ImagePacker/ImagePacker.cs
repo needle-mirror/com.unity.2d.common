@@ -183,7 +183,7 @@ namespace UnityEditor.U2D.Common
         }
 
         [BurstCompile]
-        static unsafe void BurstedBlit(in NativeArray<Color32> originalBuffer, in int4 rectFrom, in int4 rectTo, int bytesPerRow, int bufferBytesPerRow, ref NativeArray<Color32> buffer)
+        internal static unsafe void BurstedBlit(in NativeArray<Color32> originalBuffer, in int4 rectFrom, in int4 rectTo, int bytesPerRow, int bufferBytesPerRow, ref NativeArray<Color32> buffer)
         {
             var c = (Color32*)buffer.GetUnsafePtr();
             

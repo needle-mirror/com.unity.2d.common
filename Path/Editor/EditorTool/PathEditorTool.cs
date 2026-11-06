@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.EditorTools;
@@ -54,7 +55,8 @@ namespace UnityEditor.U2D.Common.Path
     [InitializeOnLoad]
     internal class EditorToolManager
     {
-        private static List<IDuringSceneGuiTool> m_Tools = new List<IDuringSceneGuiTool>();
+        [NoAutoStaticsCleanup]
+        private static readonly List<IDuringSceneGuiTool> m_Tools = new List<IDuringSceneGuiTool>();
 
         static EditorToolManager()
         {

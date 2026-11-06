@@ -106,14 +106,6 @@ namespace UnityEditor.U2D.Common
     internal class TextureSpriteSettings : ITextureSettings
     {
         [SerializeField]
-        string m_PackingTag;
-        public string packingTag
-        {
-            get { return m_PackingTag; }
-            set { m_PackingTag = value; }
-        }
-
-        [SerializeField]
         float m_PixelsPerUnit;
         public float pixelsPerUnit
         {
@@ -137,24 +129,20 @@ namespace UnityEditor.U2D.Common
             set { m_ExtrudeEdges = value; }
         }
 
-        public bool qualifyForPacking { get; set; }
         public SpriteImportData[] spriteSheetData { get; set; }
 
         public TextureSpriteSettings()
         {
-            packingTag = "";
             pixelsPerUnit = 100;
             meshType = SpriteMeshType.Tight;
             extrudeEdges = 1;
         }
 
-        public TextureSpriteSettings(string packingTag, int pixelsPerUnit, SpriteMeshType meshType, uint extrudeEdges, bool qualifyForPacking, SpriteImportData[] spriteSheetData = null)
+        public TextureSpriteSettings(int pixelsPerUnit, SpriteMeshType meshType, uint extrudeEdges, SpriteImportData[] spriteSheetData = null)
         {
-            this.packingTag = packingTag;
             this.pixelsPerUnit = pixelsPerUnit;
             this.meshType = meshType;
             this.extrudeEdges = extrudeEdges;
-            this.qualifyForPacking = qualifyForPacking;
             this.spriteSheetData = spriteSheetData;
         }
 
@@ -163,8 +151,6 @@ namespace UnityEditor.U2D.Common
             settings.textureImporterSettings.spritePixelsPerUnit = pixelsPerUnit;
             settings.textureImporterSettings.spriteMeshType = meshType;
             settings.textureImporterSettings.spriteExtrude = extrudeEdges;
-            settings.spritePackingTag = packingTag;
-            settings.qualifyForSpritePacking = qualifyForPacking;
             settings.spriteImportData = spriteSheetData;
         }
     }

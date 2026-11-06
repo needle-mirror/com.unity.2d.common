@@ -1,10 +1,12 @@
-﻿using UnityEngine;
+﻿using Unity.Scripting.LifecycleManagement;
+using UnityEngine;
 
 namespace UnityEditor.U2D.Common.Path
 {
     internal static class BezierUtility
     {
-        static Vector3[] s_TempPoints = new Vector3[3];
+        [NoAutoStaticsCleanup]
+        static readonly Vector3[] s_TempPoints = new Vector3[3];
 
         public static Vector3 BezierPoint(Vector3 startPosition, Vector3 startTangent, Vector3 endTangent, Vector3 endPosition, float t)
         {

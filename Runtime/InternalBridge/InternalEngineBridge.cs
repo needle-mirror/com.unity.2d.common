@@ -14,6 +14,29 @@ namespace UnityEngine.U2D.Common
         Compatible = 2
     }
 
+    internal enum SpriteRendererChangeType
+    {
+        SpriteChanged = SpriteChangeType.SpriteChanged,
+        SpriteAtlasChanged = SpriteChangeType.SpriteAtlasChanged,
+        SpriteModified = SpriteChangeType.SpriteModified,
+        SpriteBonesModified = SpriteChangeType.SpriteBonesModified
+    }
+
+    // Wraps the engine's typed sprite-change callback, whose delegate type callers outside the bridge can't name.
+    // Keep one instance per listener so that unregistering removes the same delegate that was registered.
+    internal sealed class SpriteRendererChangeListener
+    {
+        readonly UnityEngine.Events.UnityAction<SpriteRenderer, SpriteChangeType> m_Handler;
+
+        public SpriteRendererChangeListener(Action<SpriteRenderer, SpriteRendererChangeType> callback)
+        {
+            m_Handler = (spriteRenderer, changeType) => callback(spriteRenderer, (SpriteRendererChangeType)changeType);
+        }
+
+        public void Register(SpriteRenderer spriteRenderer) => spriteRenderer.RegisterSpriteChangeCallback(m_Handler);
+        public void Unregister(SpriteRenderer spriteRenderer) => spriteRenderer.UnregisterSpriteChangeCallback(m_Handler);
+    }
+
     internal static class InternalEngineBridge
     {
         public static void SetLocalAABB(SpriteRenderer spriteRenderer, Bounds aabb)

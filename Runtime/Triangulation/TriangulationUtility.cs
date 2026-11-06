@@ -75,7 +75,7 @@ namespace UnityEngine.U2D.Common
         static readonly float k_CollinearTolerance = 0.0001f;
 
         [BurstCompile]
-        static unsafe int ValidateCollinear(float2* points, int pointCount, float epsilon)
+        internal static unsafe int ValidateCollinear(float2* points, int pointCount, float epsilon)
         {
             if (pointCount < 3)
                 return 0;
@@ -96,7 +96,7 @@ namespace UnityEngine.U2D.Common
         }
 
         [BurstCompile]
-        static unsafe void TessellateBurst(Allocator allocator, float2* points, int pointCount, int2* edges, int edgeCount, float2* outVertices, int* outIndices, int2* outEdges, int arrayCount, int3* result)
+        internal static unsafe void TessellateBurst(Allocator allocator, float2* points, int pointCount, int2* edges, int edgeCount, float2* outVertices, int* outIndices, int2* outEdges, int arrayCount, int3* result)
         {
 
             NativeArray<int2> _edges = new NativeArray<int2>(edgeCount, allocator);
@@ -139,7 +139,7 @@ namespace UnityEngine.U2D.Common
         }
 
         [BurstCompile]
-        static unsafe void SubdivideBurst(Allocator allocator, float2* points, int pointCount, int2* edges, int edgeCount, float2* outVertices, int* outIndices, int2* outEdges, int arrayCount, float areaFactor, float areaThreshold, int refineIterations, int smoothenIterations, int3* result)
+        internal static unsafe void SubdivideBurst(Allocator allocator, float2* points, int pointCount, int2* edges, int edgeCount, float2* outVertices, int* outIndices, int2* outEdges, int arrayCount, float areaFactor, float areaThreshold, int refineIterations, int smoothenIterations, int3* result)
         {
             NativeArray<int2> _edges = new NativeArray<int2>(edgeCount, allocator);
             for (int i = 0; i < _edges.Length; ++i)

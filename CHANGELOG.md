@@ -1,5 +1,12 @@
 # Changelog
 
+## [17.0.0] - 2026-11-06
+### Added
+- Internal API for common string to hashcode.
+
+### Fixed
+- Fixed UAC2017 "Failed to generate a Burst direct call" warnings. (UUM-160239)
+
 ## [16.0.0] - 2026-09-02
 ### Changed
 - Improved UTess Performance.
@@ -65,7 +72,7 @@
 - Atlas sample to use correct filepath when building for Android.
 
 ## [9.0.5] - 2024-05-16
-- ### Fixed
+### Fixed
 - DANB-604 Fix case where Spriteshape vertex array exceeds limit even though it has not reached 64K.
 
 ## [9.0.4] - 2024-02-06

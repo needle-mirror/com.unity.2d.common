@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.U2D.Common.Path
@@ -30,6 +31,7 @@ namespace UnityEditor.U2D.Common.Path
             return controlPoints.ToArray();
         }
 
-        public static Polygon empty = new Polygon() { isOpenEnded = true, points = new Vector3[0] };
+        [NoAutoStaticsCleanup]
+        public static readonly Polygon empty = new Polygon() { isOpenEnded = true, points = new Vector3[0] };
     }
 }

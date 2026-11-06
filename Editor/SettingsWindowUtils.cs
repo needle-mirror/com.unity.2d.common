@@ -6,10 +6,10 @@ namespace UnityEditor.U2D.Common
     {
         internal class GUIScope : GUI.Scope
         {
-            static float s_DefaultLabelWidth = 250.0f;
-            static float s_DefaultLayoutMaxWidth = 500.0f;
-            static float s_marginLeft = 10.0f;
-            static float s_marginTop = 10.0f;
+            const float s_DefaultLabelWidth = 250.0f;
+            const float s_DefaultLayoutMaxWidth = 500.0f;
+            const float s_marginLeft = 10.0f;
+            const float s_marginTop = 10.0f;
             float m_LabelWidth;
 
             public GUIScope(float layoutMaxWidth)

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Unity.Scripting.LifecycleManagement;
+using UnityEngine;
 
 namespace UnityEditor.U2D.Common.Path.GUIFramework
 {
@@ -39,6 +40,7 @@ namespace UnityEditor.U2D.Common.Path.GUIFramework
         /// <summary>
         /// Zero definition of LayoutData.
         /// </summary>
+        [NoAutoStaticsCleanup]
         public static readonly LayoutData zero = new LayoutData() { index = 0, distance = float.MaxValue, position = Vector3.zero, forward = Vector3.forward, up = Vector3.up, right = Vector3.right };
 
         /// <summary>

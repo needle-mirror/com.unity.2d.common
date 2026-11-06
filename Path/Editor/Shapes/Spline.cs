@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.U2D.Common.Path
@@ -97,6 +98,7 @@ namespace UnityEditor.U2D.Common.Path
             return controlPoints.ToArray();
         }
 
-        public static Spline empty = new Spline() { isOpenEnded = true, points = new Vector3[0] };
+        [NoAutoStaticsCleanup]
+        public static readonly Spline empty = new Spline() { isOpenEnded = true, points = new Vector3[0] };
     }
 }

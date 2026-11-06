@@ -1,4 +1,5 @@
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.U2D.Common.Path
@@ -17,6 +18,7 @@ namespace UnityEditor.U2D.Common.Path
         const string kControlPointSAKey = UserSettings.kSettingsUniqueKey + "PathEditorSetting.ControlPointSA";
         static readonly GUIContent kControlPointSKeyContent = EditorGUIUtility.TrTextContent("Control Point (Selected)");      
         
+        [NoAutoStaticsCleanup]
         static bool showHandle = true;
         
         public static Color controlPointColor
@@ -110,6 +112,7 @@ namespace UnityEditor.U2D.Common.Path
         const string kTangentAKey = UserSettings.kSettingsUniqueKey + "PathEditorSetting.TangentA";
         static readonly GUIContent kTangentKeyContent = EditorGUIUtility.TrTextContent("Tangent Color");        
         
+        [NoAutoStaticsCleanup]
         static bool showHandle = true;
         
         public static Color splineColor
@@ -214,8 +217,10 @@ namespace UnityEditor.U2D.Common.Path
     internal class UserSettings : SettingsProvider
     {
         public const string kSettingsUniqueKey = "UnityEditor.U2D.SpriteShape/";
-        private static ControlPointSettings s_ControlPointSettings = new ControlPointSettings();
-        private static HandleSettings s_HandleSettings = new HandleSettings();
+        [NoAutoStaticsCleanup]
+        private static readonly ControlPointSettings s_ControlPointSettings = new ControlPointSettings();
+        [NoAutoStaticsCleanup]
+        private static readonly HandleSettings s_HandleSettings = new HandleSettings();
         
         public UserSettings() : base("Preferences/2D/Sprite Shape", SettingsScope.User)
         {
