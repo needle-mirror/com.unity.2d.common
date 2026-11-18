@@ -1,5 +1,9 @@
 # Changelog
 
+## [17.0.1] - 2026-11-18
+### Added
+- Internal editor APIs used by the PSD Importer: persistent type ID lookup, imported object type lookup and prefab asset handle lookup.
+
 ## [17.0.0] - 2026-11-06
 ### Added
 - Internal API for common string to hashcode.

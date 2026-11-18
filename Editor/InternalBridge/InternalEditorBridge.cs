@@ -203,6 +203,32 @@ namespace UnityEditor.U2D.Common
         {
             return TextureUtil.GetStorageMemorySizeLong(t);
         }
+
+        public static int GetPersistentTypeId(string typeName)
+        {
+            return UnityType.FindTypeByName(typeName)?.persistentTypeID ?? 0;
+        }
+
+        // The native type an importer registers the object with. Objects of a script are MonoBehaviour.
+        public static bool TryGetImportedObjectType(UnityEngine.Object obj, out int persistentTypeId, out string typeName)
+        {
+            UnityType type = obj is MonoBehaviour || obj is ScriptableObject
+                ? UnityType.FindTypeByName("MonoBehaviour")
+                : null;
+            for (Type t = obj.GetType(); type == null && t != null; t = t.BaseType)
+            {
+                type = UnityType.FindTypeByName(t.Name);
+            }
+
+            persistentTypeId = type?.persistentTypeID ?? 0;
+            typeName = type?.name;
+            return type != null;
+        }
+
+        public static UnityEngine.Object GetPrefabAssetHandle(GameObject prefabRoot)
+        {
+            return PrefabUtility.GetPrefabAssetHandle(prefabRoot);
+        }
     }
 
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
